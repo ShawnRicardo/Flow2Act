@@ -17,8 +17,11 @@
 </p>
 
 <p align="center">
-  <a href="https://shawnricardo.github.io/Flow2Act.github.io/">Project Page</a> |
-  <a href="https://github.com/ShawnRicardo/Flow2Act">Code</a>
+  <a href="https://shawnricardo.github.io/Flow2Act.github.io/">🏠 Project Page</a> |
+  <img src="assets/icons/paper.svg" width="16" height="16" alt=""> Paper (Coming soon) |
+  <a href="https://github.com/ShawnRicardo/Flow2Act">Code</a> |
+  <a href="https://huggingface.co/ShawnRicardo/Flow2Act-HF"><img src="assets/icons/hugging-face.svg" width="16" height="16" alt=""> Hugging Face</a> |
+  <a href="https://modelscope.cn/models/ShawnRicardo/Flow2Act-MS"><img src="assets/icons/modelscope.png" width="16" height="16" alt=""> ModelScope</a>
 </p>
 
 <p align="center">
