@@ -1,11 +1,11 @@
-# Flow2Act: Learning to Act through Geometrically Grounded Motion Anticipation
+<h1 align="center">Flow2Act: Learning to Act through Geometrically Grounded Motion Anticipation</h1>
 
 <p align="center">
   <a href="https://shawnricardo.github.io/">Lijun Guo</a><sup>1,&#42;</sup>,
   <a href="https://maxwell-zhao.github.io/">Haoyu Zhao</a><sup>2,&#42;</sup>,
   Xianda Guo<sup>1</sup>, Chengwei Wu<sup>3</sup>, Yetong Zeng<sup>4</sup>,
   Chenglong Zhang<sup>5</sup>, Qian Zhou<sup>1</sup>, Zhongyu Li<sup>2</sup>,
-  and Hua Zou<sup>1,†</sup>
+  and Hua Zou<sup>1,✉️</sup>
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 
 <p align="center">
   <sup>&#42;</sup> Equal contribution &emsp;
-  <sup>†</sup> Corresponding author
+  ✉️ Corresponding author
 </p>
 
 ## Architecture
