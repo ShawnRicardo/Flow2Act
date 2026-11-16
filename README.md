@@ -1,20 +1,30 @@
 # Flow2Act: Learning to Act through Geometrically Grounded Motion Anticipation
 
-[Lijun Guo](https://shawnricardo.github.io/)<sup>1,&#42;</sup>,
-[Haoyu Zhao](https://maxwell-zhao.github.io/)<sup>2,&#42;</sup>,
-Xianda Guo<sup>1</sup>, Chengwei Wu<sup>3</sup>, Yetong Zeng<sup>4</sup>,
-Chenglong Zhang<sup>5</sup>, Qian Zhou<sup>1</sup>, Zhongyu Li<sup>2</sup>,
-Hua Zou<sup>1,†</sup>
+<p align="center">
+  <a href="https://shawnricardo.github.io/">Lijun Guo</a><sup>1,&#42;</sup>,
+  <a href="https://maxwell-zhao.github.io/">Haoyu Zhao</a><sup>2,&#42;</sup>,
+  Xianda Guo<sup>1</sup>, Chengwei Wu<sup>3</sup>, Yetong Zeng<sup>4</sup>,
+  Chenglong Zhang<sup>5</sup>, Qian Zhou<sup>1</sup>, Zhongyu Li<sup>2</sup>,
+  and Hua Zou<sup>1,†</sup>
+</p>
 
-<sup>1</sup> Wuhan University<br>
-<sup>2</sup> The Chinese University of Hong Kong<br>
-<sup>3</sup> NIO<br>
-<sup>4</sup> University of Hong Kong<br>
-<sup>5</sup> Nanjing University
+<p align="center">
+  <sup>1</sup>&nbsp;Wuhan University &emsp;
+  <sup>2</sup>&nbsp;The Chinese University of Hong Kong &emsp;
+  <sup>3</sup>&nbsp;NIO &emsp;
+  <sup>4</sup>&nbsp;University of Hong Kong &emsp;
+  <sup>5</sup>&nbsp;Nanjing University
+</p>
 
-<sup>&#42;</sup> Equal contribution · <sup>†</sup> Corresponding author
+<p align="center">
+  <a href="https://shawnricardo.github.io/Flow2Act.github.io/">Project Page</a> |
+  <a href="https://github.com/ShawnRicardo/Flow2Act">Code</a>
+</p>
 
-[Project page](https://shawnricardo.github.io/Flow2Act.github.io/)
+<p align="center">
+  <sup>&#42;</sup> Equal contribution &emsp;
+  <sup>†</sup> Corresponding author
+</p>
 
 ## Architecture
 
