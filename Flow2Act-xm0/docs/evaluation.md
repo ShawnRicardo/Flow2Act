@@ -1,6 +1,6 @@
 # LIBERO and LIBERO-Plus evaluation
 
-The release evaluates **Flow2Act checkpoints**, including `baseline`, `static`, `motion2d`, and `motion3d`, with the `Flow2Act-XR0-checkpoint-v1` contract. State/action normalization, query layout, and decision-memory semantics are preserved. Official XR0 weights are not Flow2Act checkpoints. Before using a policy from the development version, explicitly import it with `scripts/import_flow2act_artifacts.py checkpoint --source /path/to/existing-policy.ckpt --output /path/to/policy_flow2act.ckpt`; the source remains untouched.
+The evaluator loads **Flow2Act checkpoints** with the `Flow2Act-XR0-checkpoint-v1` metadata. The saved configuration determines normalization, action queries, and decision memory. See the main [README](../README.md#4-inference) to prepare a policy checkpoint.
 
 ## Separate environments
 
@@ -24,9 +24,9 @@ conda run -n flow2act-plus python -m pip install -r requirements/libero_plus.txt
 conda run -n flow2act-plus python -m pip install --no-deps -e third_party/LIBERO-plus
 ```
 
-The requirements preserve **MuJoCo 3.3.6 for LIBERO** and **MuJoCo 2.3.7 for LIBERO-Plus**, with robosuite 1.4.0. In the original development environment, vanilla LIBERO used a private `PYTHONPATH` overlay containing MuJoCo 3.3.6 over an environment whose installed package metadata reported 2.3.7. This release replaces that overlay with a direct version pin. The launcher records the versions actually imported by the simulator interpreters; renderer reports also contain the actual version and OpenGL device.
+Use **MuJoCo 3.3.6 for LIBERO** and **MuJoCo 2.3.7 for LIBERO-Plus**, with robosuite 1.4.0. The requirement files pin these versions separately. The launcher records the simulator versions and OpenGL device used for each run.
 
-These are different simulator stacks. Do not replace one with the other when comparing results, and do not describe the Flow2Act evaluator as an exact reproduction of the official XR0 evaluation seeding scheme. This publication copy has CPU/CLI tests; a fresh installation still needs the supplied rendering preflight and a short rollout on its target GPU.
+The Flow2Act evaluation protocol is specified below. Use the renderer check before starting evaluation on a new machine.
 
 LIBERO-Plus needs its separate [benchmark assets](https://huggingface.co/datasets/Sylvest/LIBERO-plus/tree/main). Follow the benchmark README and extract `assets.zip` into `third_party/LIBERO-plus/libero/libero/`. Keep benchmark source, BDDL files, official initial states, the classification JSON, and assets from the same benchmark version. The release does not redistribute those assets. Its additional perturbation dependencies are included in `requirements/libero_plus.txt`; the `Wand` package needs the system ImageMagick/MagickWand library.
 
@@ -36,7 +36,7 @@ Rendering uses NVIDIA EGL, without a display server. The machine/container must 
 
 ## Full evaluation
 
-Activate the policy environment. Set absolute interpreter paths for the two simulators and select the checkpoint. `PROCESSOR_PATH` is the downloaded XR0 Pretrain processor/config directory; it is explicitly supplied so a checkpoint's old machine-specific path is not used.
+Activate the policy environment. Set absolute interpreter paths for the two simulators and select the checkpoint. `PROCESSOR_PATH` selects the downloaded XR0 Pretrain processor/config directory.
 
 ```bash
 CHECKPOINT=/path/to/step-step=0030000_flow2act.ckpt \
@@ -96,7 +96,7 @@ GPU_IDS=0,1,2,3 SEED=7 \
 bash scripts/evaluate_flow2act.sh
 ```
 
-The launcher verifies the source checkpoint/contract/protocol and imports completed episodes, including normal policy failures. New workers skip those identities, resharing only unfinished episodes. Source outputs remain untouched. It rejects malformed, duplicate, partial, incompatible, or smoke completion evidence. Continuation is explicit; there is no automatic retry or background recovery mechanism. The portable launcher expects its own `evaluation_config.json` format, rather than silently merging historical runs from incompatible launchers.
+The launcher verifies the source checkpoint/contract/protocol and imports completed episodes, including normal policy failures. New workers skip those identities, resharing only unfinished episodes. Source outputs remain untouched. It rejects malformed, duplicate, partial, incompatible, or smoke completion evidence. Continuation is explicit; there is no automatic retry or background recovery mechanism. The source directory must contain an `evaluation_config.json` compatible with the current launcher.
 
 A renderer-only check loads no policy and produces no benchmark scores:
 

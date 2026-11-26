@@ -1,6 +1,6 @@
 # 独立深度重建
 
-这个实验在策略训练完成后读取一个 **Flow2Act policy checkpoint**。支持 `static`、`motion2d`、`motion3d`，以及这些分支中保存的 memory 长度；架构和四层 VLM taps 从 checkpoint 契约恢复。原生官方权重没有该契约，不能直接用作这个入口的输入。开发版本的策略和提取权重先按主 README 的导入命令转换到独立新路径。
+这个实验在策略训练完成后读取一个 **Flow2Act policy checkpoint**。支持 `static`、`motion2d`、`motion3d`，以及这些分支中保存的 memory 长度；架构和四层 VLM taps 从 checkpoint 契约恢复。原生官方权重没有该契约，不能直接用作这个入口的输入。策略 checkpoint 和提取权重的准备方式见主 README。
 
 完整 VLA、DA3 backbone 和原生 DualDPT 深度头均冻结，仅优化新 Adapter。它不修改策略 checkpoint，不作为动作推理的必需模块。
 
@@ -18,7 +18,7 @@ VLM 特征在 `no_grad` 下提取；Student 经过冻结深度头时保留输入
 
 ## 环境与输入
 
-使用主 README 中的策略环境。在仓库根目录运行。必须显式设置 `POLICY_CHECKPOINT`，避免默认读取某个内部实验。可通过已激活 Conda 环境启动，或设置 `ENV_PATH` 指向环境目录。
+使用主 README 中的策略环境。在仓库根目录运行。通过 `POLICY_CHECKPOINT` 指定已训练的策略权重。可通过已激活 Conda 环境启动，或设置 `ENV_PATH` 指向环境目录。
 
 必要资源：
 

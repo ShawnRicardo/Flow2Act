@@ -46,15 +46,8 @@ and `meta/{info.json,episodes.jsonl,tasks.jsonl}`.
 The two image fields are `observation.images.image` and
 `observation.images.wrist_image`; state/action dimensions are 8/7.
 
-For the development dataset, complete H30 window counts are:
-
-| Suite | Windows |
-| --- | ---: |
-| libero_10 | 90,478 |
-| libero_goal | 39,630 |
-| libero_object | 53,818 |
-| libero_spatial | 40,442 |
-| Total | 224,368 |
+Training uses complete 30-step action windows from each episode. The number of
+windows is computed from the dataset metadata.
 
 Do not repeat the last action at episode boundaries. Statistics must be computed
 over these complete windows: states at anchors, actions over every window label.

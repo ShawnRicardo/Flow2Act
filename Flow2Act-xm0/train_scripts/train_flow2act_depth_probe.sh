@@ -67,7 +67,7 @@ ENTRY="${REPO_ROOT}/xr0/tools/train_flow2act_depth_probe.py"
 # The preparation pass only reads metadata and checks the destination.
 OUTPUT_DIR="$(python "${ENTRY}" --prepare-output "${TRAIN_ARGS[@]}" "$@")"
 CONSOLE_LOG="${OUTPUT_DIR}/console_node${NODE_RANK}_DepthOnly_flow2act.log"
-# Keep ownership on the existing console file; no marker or run-id is needed.
+# Hold the output lock on the console file.
 exec {OUTPUT_LOG_FD}>>"${CONSOLE_LOG}"
 flock -n "${OUTPUT_LOG_FD}" || { echo "Output is already owned by a running node: ${OUTPUT_DIR}" >&2; exit 2; }
 LOG_FILES=("${CONSOLE_LOG}")

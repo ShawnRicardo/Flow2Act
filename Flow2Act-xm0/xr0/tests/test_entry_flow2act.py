@@ -1,4 +1,4 @@
-"""Exercise copied shell entrypoints without starting CUDA or model loading."""
+"""Exercise training shell entrypoints without starting CUDA or model loading."""
 import json
 import os
 from pathlib import Path

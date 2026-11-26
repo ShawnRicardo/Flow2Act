@@ -9,7 +9,6 @@ Use [the repository README](../README.md) for installation and launch commands,
   are exposed at the top and determine the output directory. Missing normalization
   statistics are computed automatically; existing statistics are validated and reused.
 
-No local run directory or checkpoint is selected by default in the publication copy.
 Preprocessing entries are in `preprocess/`; local policy import is
 `scripts/import_checkpoint_flow2act.py`. Their resource layouts are described in
 the linked guides.

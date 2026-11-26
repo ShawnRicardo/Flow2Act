@@ -1,5 +1,5 @@
 # ruff: noqa: N802, N999
-"""Resource-path and training-launch contracts for the publication entries."""
+"""Resource-path and training-launch checks."""
 
 import dataclasses
 import json

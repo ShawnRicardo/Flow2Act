@@ -1,7 +1,7 @@
 # Third-party attribution
 
 The root license does not replace component or pretrained-model licenses.
-No weights, datasets or simulator checkouts are distributed in this source copy.
+No weights, datasets or simulator checkouts are bundled with this code.
 The Track4World source/configuration subset is included for standalone preprocessing.
 
 | Component | Included use and attribution |
@@ -18,7 +18,5 @@ The standalone cache exporter uses the included Torch preprocessing runtime.
 The optional standalone reference-verification adapter is explicitly selected
 and is not part of training or deployment.
 
-Publication modifications to the development chain concern entrypoint/resource
-portability, test selection, documentation, and exclusion rules. Original
-copyright headers are retained. Consult the supplied source and model terms
+Original copyright headers are retained. Consult the source and model terms
 before redistributing external weights or derived artifacts.

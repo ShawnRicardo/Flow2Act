@@ -1,4 +1,4 @@
-# Experiment contract and code map
+# Model and training details
 
 ## Independent experiments
 
@@ -51,9 +51,8 @@ Terminal progress reports percentage, elapsed time, update time, ETA and loss.
 compiled update and includes later checkpoint time. Terminal output is not
 automatically redirected to a file; capture it explicitly when required.
 
-Training refuses nonempty output directories. `STOP_AFTER_UPDATES=20` runs a
-short gate without changing the 30k LR
-timeline. The entry never changes batch or scientific settings after OOM.
+Training requires a fresh output directory. Set `STOP_AFTER_UPDATES=20` for a
+short training check using the same learning-rate schedule.
 
 ## Modules
 
@@ -66,7 +65,7 @@ timeline. The entry never changes batch or scientific settings after OOM.
 | teacher_contract_flow2act.py | Framework-free shapes shared by extraction and JAX |
 | cache_flow2act.py | Shared cache schema and array names |
 | data_flow2act.py | H30 index, raw videos/parquet, cache masks, deterministic sampler |
-| training_flow2act.py | Initialization, accumulated updates, EMA, sharding, checkpoint save/restore |
+| training_flow2act.py | Initialization, accumulated updates, EMA, sharding, checkpoint saving |
 | policy_flow2act.py | EMA restore, denoising, per-environment decision memory |
 | client_flow2act.py | 30-step prediction and 10-step execution |
 | artifacts_flow2act.py | Explicit CPU import of supplied local JAX EMA checkpoints |
@@ -75,13 +74,3 @@ timeline. The entry never changes batch or scientific settings after OOM.
 The native JAX model and registry stay unchanged. Files under `models_pytorch/`
 are upstream import dependencies and compatibility sources; they are not a
 second training chain.
-
-## Copy-specific integration changes
-
-Model mathematics, native base parameter paths, optimizer, sampling, and training
-defaults are unchanged. The auxiliary parameter root and public artifact names
-use `Flow2Act`/`flow2act` consistently; see the resource guide before reusing an
-existing checkpoint or cache. Publication changes also include:
-configurable simulator/interpreter/catalog paths;
-per-run benchmark configs; resource-free test selection; documentation and
-GitHub exclusions. No training/evaluation state was copied.

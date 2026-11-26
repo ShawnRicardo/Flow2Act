@@ -3,7 +3,7 @@
 ## 范围
 
 本仓库保留原生 JAX π0.5 和独立 JAX Flow2Act 两条训练链路。
-本发布目录只维护 Flow2Act 实验与其原生 OpenPI 依赖。
+本项目维护 Flow2Act 实验与其原生 OpenPI 依赖。
 
 - 原生 JAX 模型、训练入口与全局 registry 保持不变；新增实验放在
   `src/openpi/flow2act/`，模块和入口使用 `_flow2act` 后缀，类名使用 `Flow2Act` 前缀。
@@ -11,10 +11,10 @@
 - 保留 JAX 训练、策略服务、LIBERO/LIBERO-Plus 评测、可视化及其依赖。
 - 上游 `models_pytorch/` 的基础模块是原生 `models/model.py` 的直接导入依赖；
   不可按名字批量删除。Torch 也用于 LeRobot 数据加载和独立数值对照测试。
-- 发布副本通过显式 benchmark 路径生成每次评测的配置，不依赖开发机目录。
+- 评测通过显式 benchmark 路径生成每次运行的配置。
 - 不将数据、权重、缓存、虚拟环境、存储软链接或训练/评测结果加入版本控制。
 
-## 科学合同
+## 模型与数据约定
 
 - 不静默改变数据顺序、相机顺序、seed、基础模型、Teacher、checkpoint、loss、
   训练步数、batch、GA、LR、归一化、action 表示或推理协议。
@@ -34,7 +34,7 @@
   每卡 microbatch=`GLOBAL_BATCH_SIZE / GA / NUM_GPUS`。
 - 默认30,000次 optimizer 更新，每5,000次保存；warmup2000次从5e-7到5e-5，
   cosine 衰减至第30,000次的5e-6；EMA0.999、seed42。
-- 不为避免 OOM 自动改变用户指定配置；失败与未执行门禁明确记录。
+- 不为避免 OOM 自动改变用户指定配置；如实报告验证范围及失败原因。
 
 ## 文件、权重与 checkpoint
 
@@ -70,5 +70,5 @@
 
 - Shell 改动运行 `bash -n`；Python 完成 compile/import 和定向 pytest/ruff。
 - 清理代码时确认两条 JAX 链路没有对已删模块的导入，原生 JAX 与 Flow2Act 核心逻辑保持不变。
-- 模型/数据改动按真实样本、geometry/mask、B=1 前反向、多卡小步、20-update 门禁逐级验证。
+- 模型/数据改动按真实样本、geometry/mask、B=1 前反向、多卡小步及20次更新逐级验证。
 - 未执行的 GPU、多机、真实仿真或完整训练明确标为未验证。

@@ -21,6 +21,5 @@ DA3 pseudo-depth, not ground-truth metric depth.
 
 Flow2Act names its own modules, training entries and artifact formats separately
 from these upstream projects. Track4World and DA3 names are retained for genuine
-third-party attribution. Offline cache / extraction helpers were adapted from
-the development implementation shared with OpenPI; this release includes those
-helpers directly and does not import OpenPI.
+third-party attribution. Offline cache and weight-extraction helpers are included
+in this project and do not require OpenPI.

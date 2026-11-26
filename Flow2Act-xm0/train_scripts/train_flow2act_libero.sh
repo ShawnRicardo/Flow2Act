@@ -129,7 +129,7 @@ mkdir -p "${OUTPUT_DIR}"
 LOG_FILES=("${CONSOLE_LOG}")
 if (( NODE_RANK == 0 )); then LOG_FILES+=("${LOG_FILE}"); fi
 touch "${LOG_FILES[@]}"
-# Explicit 777 outputs were requested; umask alone creates ordinary files as 666.
+# Ensure shared output permissions; umask alone creates ordinary files as 666.
 set_output_permissions() {
  find -H "${OUTPUT_DIR}" \( -type f -o -type d \) -exec chmod 00777 -- {} +
 }

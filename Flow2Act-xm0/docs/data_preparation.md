@@ -181,8 +181,7 @@ not ground-truth metric motion. The loader also masks visibility / confidence
 below 0.5, episode tails and invalid geometry.
 
 The root `metadata_flow2act.json` declares the `Flow2Act-motion-v1` cache
-contract; its per-episode filenames match the table above. Existing development
-caches must be imported into a new directory with
+contract; its per-episode filenames match the table above. Existing caches with a different naming convention must be imported into a new directory with
 `python scripts/import_flow2act_artifacts.py motion-cache --source /path/to/existing-cache --output /path/to/new-flow2act-cache`.
 The importer preserves array values and supervision semantics without rerunning
 the Teacher or modifying the source cache. Extracted DA3 files can similarly be
@@ -191,7 +190,6 @@ imported with the `da3-weights` subcommand. See the root README for full command
 To use the cache in the stage launcher:
 
 ```bash
-STAGE=motion3d MEMORY_LENGTH=1 \
 MOTION_CACHE_ROOT=./checkpoints/cache/libero4mix_motion3d_flow2act \
 TEACHER_WEIGHTS_DIR=./checkpoints/da3_flow2act \
 bash train_scripts/train_flow2act_libero.sh

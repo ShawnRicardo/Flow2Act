@@ -1,20 +1,19 @@
 # LIBERO and LIBERO-Plus evaluation
 
-The launcher runs eight local JAX EMA servers on physical GPUs 0–7 and distributes
-the full benchmark across them. It preserves seed 7, 10 denoising steps,
-prediction 30/execution 10, the checkpoint's memory setting, and the action/image
-protocol used by the development evaluation.
+The launcher runs eight local JAX EMA servers on GPUs 0–7 and distributes the
+benchmark across them. Evaluation uses seed 7, 10 denoising steps, prediction
+horizon 30, execution horizon 10, and the checkpoint's memory setting.
 
 ## External simulator environments
 
 Keep simulator installations separate from the Python 3.11 JAX environment.
 Use Python 3.10 environments for LIBERO and LIBERO-Plus, each importing only its
-own benchmark checkout. The development evaluation used MuJoCo 2.3.7,
-robosuite 1.4.0, Gym 0.25.2, and NumPy 1.24.4. A matching dependency list is in
+own benchmark checkout. The simulator dependencies are MuJoCo 2.3.7,
+robosuite 1.4.0, Gym 0.25.2, and NumPy 1.24.4, as specified in
 `requirements/eval_flow2act.txt`.
 
 Install the simulator sources and compatible runtime environments separately
-from the JAX environment. These commits match the existing benchmark protocol:
+from the JAX environment using the pinned benchmark revisions below:
 
 ```bash
 sudo apt-get install -y unzip libegl1 libgl1 libglvnd0 libmagickwand-dev
@@ -61,8 +60,8 @@ set -o pipefail
 ```
 
 Use a fresh output directory. The preexisting `log.log` is allowed, but existing
-evaluation records are refused. Resource paths and Python executables are explicit;
-there is no dependency on the original developer's checkout or home directory.
+evaluation records are refused. Pass resource paths and simulator interpreters
+explicitly as shown above.
 `--classification` overrides the Plus catalog path; `--base-port` defaults to 26800.
 
 The output contains:
@@ -87,10 +86,6 @@ uses its prescribed initial state and 5 zero-action steps. Explicit per-episode
 flow noise makes the policy RNG independent of shard execution order.
 Initialization failures use the existing bounded placement-recovery helper.
 
-The copied source was checked with CPU tests and import checks. No new full
-8-GPU evaluation is implied by copying this release, and no prior evaluation
-outputs or trained checkpoint are distributed here.
-
 ## Standalone serving and validation
 
 For an already prepared native checkpoint or imported deployment package:
@@ -111,9 +106,6 @@ A source-only CPU suite is available with:
 CUDA_VISIBLE_DEVICES="" JAX_PLATFORMS=cpu uv run --frozen pytest -q
 ```
 
-The suite covers synthetic cache export/readback and geometry, small Orbax import,
-and a small-backbone B=1 memory=3 forward/backward/sampling regression. It does
-not establish full-size memory=3 GPU memory feasibility or simulator success rates.
-Real-data tests use `-m local_data`. Full-size training gates remain explicit,
-with `STOP_AFTER_UPDATES=20` and a fresh `OUTPUT_DIR`; no batch, GA or memory value
-is automatically reduced after OOM.
+The CPU suite covers cache I/O, geometry, checkpoint import, and reduced-model
+forward/backward/sampling. Tests requiring prepared datasets use `-m local_data`.
+For a short GPU training check, set `STOP_AFTER_UPDATES=20` with a fresh `OUTPUT_DIR`.
