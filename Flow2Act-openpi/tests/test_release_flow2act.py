@@ -62,6 +62,7 @@ def test_shell_defaults_match_python_flow2act(tmp_path):
     cfg = Flow2ActConfig()
     assert options["--stage"] == cfg.stage == "motion3d"
     assert int(options["--memory-length"]) == cfg.memory_length == 3
+    assert int(options["--max-steps"]) == cfg.max_steps == 30_000
     assert int(options["--global-batch-size"]) == cfg.global_batch_size
     assert int(options["--ga"]) == cfg.ga
     assert "motion3d_mem3_" in options["--output-dir"]

@@ -101,28 +101,17 @@ with 3D labels for the default configuration. See the resource guide for compati
 ## 3. Training
 
 ```bash
-STAGE=motion3d MEMORY_LENGTH=3 GLOBAL_BATCH_SIZE=256 GA=1 \
+GLOBAL_BATCH_SIZE=256 GA=1 \
 NUM_GPUS=4 FSDP_DEVICES=4 CUDA_VISIBLE_DEVICES=0,1,2,3 \
-MAX_STEPS=80000 SAVE_INTERVAL=5000 \
+MAX_STEPS=30000 SAVE_INTERVAL=5000 \
 bash train_scripts/train_pi05_libero_flow2act.sh
 ```
-
-`motion3d` includes the native action loss, static DA3 alignment, and both 2D and
-3D future-motion losses. Memory contains the current observation plus `t−10` and
-`t−20`. The policy predicts 30 actions and executes the first 10 before replanning.
-The learning rate warms up to `5e-5` and decays to `5e-6`.
-
-Normalization statistics are computed automatically when missing. Training outputs
-are saved under `outputs_flow2act/pi05/libero4mix/` in a directory named after the
-hyperparameters; set `OUTPUT_DIR` to choose a different path. Training parameters
-and resource paths are exposed at the top of the training script.
-`STAGE=baseline`, `static`, and `motion2d` select independent experiments.
 
 To resume, specify a complete training checkpoint. The saved configuration,
 optimizer state, and normalization statistics are restored:
 
 ```bash
-RESUME_CHECKPOINT="outputs_flow2act/pi05/libero4mix/<run>/checkpoints/checkpoint-40000" \
+RESUME_CHECKPOINT="outputs_flow2act/pi05/libero4mix/<run>/checkpoints/checkpoint-20000" \
 bash train_scripts/resume_pi05_libero_flow2act.sh
 ```
 
@@ -139,8 +128,8 @@ Install the separate LIBERO and LIBERO-Plus environments and assets using the
 eight GPUs: **2,000 LIBERO + 10,030 LIBERO-Plus episodes**.
 
 ```bash
-CHECKPOINT="outputs_flow2act/pi05/libero4mix/<run>/checkpoints/checkpoint-40000"
-EVAL_OUTPUT="results/eval/Flow2Act/pi05/checkpoint-40000-libero-family-seed7-8gpu"
+CHECKPOINT="outputs_flow2act/pi05/libero4mix/<run>/checkpoints/checkpoint-30000"
+EVAL_OUTPUT="results/eval/Flow2Act/pi05/checkpoint-30000-libero-family-seed7-8gpu"
 SIM_ENV_ROOT="$(conda info --base)/envs"
 mkdir -p "$EVAL_OUTPUT"
 set -o pipefail

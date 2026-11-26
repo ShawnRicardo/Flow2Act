@@ -4,7 +4,7 @@ The README uses a local checkpoint until a download URL is supplied. No training
 or evaluation entry downloads weights. A complete source directory contains:
 
 ```text
-checkpoints/Flow2Act/source/checkpoint-40000/
+checkpoints/Flow2Act/source/checkpoint-30000/
   config_flow2act.json   # Or one archived config*.json with the full saved configuration
   norm_stats.json
   state/
@@ -21,8 +21,8 @@ The tokenizer is prepared separately at `checkpoints/big_vision/paligemma_tokeni
 
 ```bash
 JAX_PLATFORMS=cpu .venv/bin/python scripts/import_checkpoint_flow2act.py \
-  --source checkpoints/Flow2Act/source/checkpoint-40000 \
-  --output checkpoints/Flow2Act/checkpoint-40000
+  --source checkpoints/Flow2Act/source/checkpoint-30000 \
+  --output checkpoints/Flow2Act/checkpoint-30000
 ```
 
 Import reads exactly EMA and the saved update on CPU. It checks the configured
@@ -50,7 +50,7 @@ Use the committed run checkpoint directly:
 
 ```bash
 .venv/bin/python scripts/serve_policy_flow2act.py \
-  --checkpoint "outputs_flow2act/pi05/libero4mix/<run>/checkpoints/checkpoint-40000" \
+  --checkpoint "outputs_flow2act/pi05/libero4mix/<run>/checkpoints/checkpoint-30000" \
   --port 8000
 ```
 

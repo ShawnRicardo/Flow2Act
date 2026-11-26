@@ -20,7 +20,7 @@ class Flow2ActConfig:
     fsdp_devices: int = 4
     global_batch_size: int = 256
     ga: int = 1
-    max_steps: int = 80_000
+    max_steps: int = 30_000
     save_interval: int = 5_000
     lr: float = 5e-5
     final_lr: float = 5e-6

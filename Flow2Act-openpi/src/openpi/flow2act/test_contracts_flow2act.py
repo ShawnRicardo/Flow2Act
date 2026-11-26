@@ -27,10 +27,11 @@ def test_schedule_endpoints_flow2act():
     cfg.validate()
     with pytest.raises(ValueError, match="student taps"):
         dataclasses.replace(cfg, student_taps=(-1, 8, 11, 17)).validate()
-    np.testing.assert_allclose(np.array([cfg.schedule(i) for i in (0, 1999, 79999)]), [5e-7, 5e-5, 5e-6], rtol=1e-6)
-    values = np.asarray(jax.vmap(cfg.schedule)(jnp.arange(80000)))
-    assert np.all(np.diff(values[:2000]) >= 0)
-    assert np.all(np.diff(values[1999:]) <= 0)
+    endpoints = (0, cfg.warmup_steps - 1, cfg.max_steps - 1)
+    np.testing.assert_allclose(np.array([cfg.schedule(i) for i in endpoints]), [5e-7, 5e-5, 5e-6], rtol=1e-6)
+    values = np.asarray(jax.vmap(cfg.schedule)(jnp.arange(cfg.max_steps)))
+    assert np.all(np.diff(values[: cfg.warmup_steps]) >= 0)
+    assert np.all(np.diff(values[cfg.warmup_steps - 1 :]) <= 0)
 
 
 @pytest.mark.local_data

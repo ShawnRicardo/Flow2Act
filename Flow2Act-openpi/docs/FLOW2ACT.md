@@ -3,7 +3,7 @@
 ## Independent experiments
 
 `baseline`, `static`, `motion2d`, and `motion3d` each initialize independently
-from the same local official π0.5 base. Each receives 80,000 optimizer updates.
+from the same local official π0.5 base. Each receives 30,000 optimizer updates.
 Static adds DA3 alignment, motion2d adds future 2D supervision, and motion3d also
 adds 3D supervision. The default `motion3d` therefore trains action + static +
 motion2d + motion3d losses jointly, weighted 1 / 0.02 / 1.0 / 0.1.
@@ -39,12 +39,12 @@ in-bounds and valid-3D masks and the existing Smooth L1 balancing rules.
 GBS is the effective optimizer batch. Each device processes GBS/GA/GPUs samples
 per microstep; clipping, AdamW, EMA, schedule, and global step advance once after
 all GA microsteps. Learning rates are defined by actual updates:
-update 1=5e-7, update 2000=5e-5, update 80000=5e-6.
+update 1=5e-7, update 2000=5e-5, update 30000=5e-6.
 
-Checkpoints at updates 5000, 10000,…,80000 retain live parameters, EMA, optimizer
+Checkpoints at updates 5000, 10000,…,30000 retain live parameters, EMA, optimizer
 and schedule counters, global step, RNG, sampler position, config, and norm stats.
 The frozen Teacher is not checkpointed. Save commits atomically and requires
-directory-rename support. All 16 checkpoints are retained by default.
+directory-rename support. All 6 checkpoints are retained by default.
 
 Terminal progress reports percentage, elapsed time, update time, ETA and loss.
 `metrics_flow2act.jsonl` records every optimizer update. ETA excludes the first
@@ -53,7 +53,7 @@ automatically redirected to a file; capture it explicitly when required.
 
 Fresh runs refuse nonempty output directories. Resume uses an explicitly selected
 committed checkpoint and saved configuration; worker/logging/stop controls can be
-overridden. `STOP_AFTER_UPDATES=20` runs a short gate without changing the 80k LR
+overridden. `STOP_AFTER_UPDATES=20` runs a short gate without changing the 30k LR
 timeline. The entry never changes batch or scientific settings after OOM.
 
 ## Modules

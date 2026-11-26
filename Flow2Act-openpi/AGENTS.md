@@ -32,8 +32,8 @@
   Action Expert 读取当前 prefix 和 query KV，屏蔽新增 memory/state 的直接 KV。
 - 默认单机单 JAX 进程、4卡/FSDP4、有效 GBS256、GA1；
   每卡 microbatch=`GLOBAL_BATCH_SIZE / GA / NUM_GPUS`。
-- 默认80,000次 optimizer 更新，每5,000次保存；warmup2000次从5e-7到5e-5，
-  cosine 衰减至第80,000次的5e-6；EMA0.999、seed42。
+- 默认30,000次 optimizer 更新，每5,000次保存；warmup2000次从5e-7到5e-5，
+  cosine 衰减至第30,000次的5e-6；EMA0.999、seed42。
 - 不为避免 OOM 自动改变用户指定配置；失败与未执行门禁明确记录。
 
 ## 文件、权重与 checkpoint

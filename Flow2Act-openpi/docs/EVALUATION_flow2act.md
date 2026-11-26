@@ -46,8 +46,8 @@ No simulator or model downloads occur when evaluation starts.
 
 ```bash
 export PYTHONPATH="$PWD/src:$PWD/packages/openpi-client/src"
-CHECKPOINT="checkpoints/Flow2Act/checkpoint-40000"
-EVAL_OUTPUT="results/eval/Flow2Act/pi05/checkpoint-40000-libero-family-seed7-8gpu"
+CHECKPOINT="checkpoints/Flow2Act/checkpoint-30000"
+EVAL_OUTPUT="results/eval/Flow2Act/pi05/checkpoint-30000-libero-family-seed7-8gpu"
 SIM_ENV_ROOT="$(conda info --base)/envs"
 
 mkdir -p "$EVAL_OUTPUT"
@@ -97,7 +97,7 @@ For an already prepared native checkpoint or imported deployment package:
 
 ```bash
 .venv/bin/python scripts/serve_policy_flow2act.py \
-  --checkpoint checkpoints/Flow2Act/checkpoint-40000 --port 8000
+  --checkpoint checkpoints/Flow2Act/checkpoint-30000 --port 8000
 ```
 
 The full benchmark command starts its own dedicated evaluation servers; the
