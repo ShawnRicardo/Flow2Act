@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>π0.5 · Flow2Act 训练曲线</title>
+<script src="plotly.min.js"></script>
+<style>
+:root{color-scheme:light;--bg:#f4f7fb;--panel:#fff;--text:#17243b;--muted:#61718a;--border:#dde5ef;--accent:#2563eb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1536px;margin:auto;padding:32px clamp(16px,3vw,48px)}header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-size:26px;letter-spacing:-.6px;margin:0}h2{font-size:17px;margin:0}p{margin:4px 0}.muted{color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:650}
+.badge{display:inline-block;border-radius:999px;background:#e8f0ff;color:#244b95;padding:5px 12px;margin-right:6px}.online{color:#15803d}
+.path{font:12px/1.7 ui-monospace,monospace;overflow-wrap:anywhere;color:var(--muted);margin:18px 0}.summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:18px 0}
+.stat,.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px}.stat{padding:16px 18px}.stat .label{color:var(--muted);font-size:12px}.value{font-size:25px;font-weight:650;letter-spacing:-.6px;font-variant-numeric:tabular-nums}.detail{font-size:12px;color:var(--muted)}
+.progress{height:5px;background:#e5ebf5;border-radius:4px;overflow:hidden;margin-top:9px}.progress span{display:block;height:100%;background:var(--accent);transition:width .4s}
+.panel{padding:20px;margin:16px 0}.panel-head,.controls{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.controls{justify-content:flex-start;margin-top:18px}
+label{display:inline-flex;align-items:center;gap:8px}select,button,input{font:inherit}select,button{background:white;color:var(--text);border:1px solid #cbd5e1;border-radius:8px;padding:7px 11px}button{cursor:pointer}button:hover{background:#eff5ff}input[type=range]{width:145px;accent-color:var(--accent)}input[type=checkbox]{accent-color:var(--accent)}
+.chart{height:480px;width:100%;margin-top:12px}.short-chart{height:260px}.diagnostics{display:grid;grid-template-columns:1fr 1fr;gap:16px}.diagnostics .panel{margin-top:0}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;margin-top:14px;font-variant-numeric:tabular-nums}th,td{text-align:right;padding:10px 12px;border-bottom:1px solid #edf1f6}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-weight:500}td:first-child{font-weight:600}.swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}.note{font-size:12px;color:var(--muted);margin-top:12px}.status{font-size:12px;color:var(--muted)}.error{color:#b91c1c}footer{font-size:12px;color:var(--muted);padding:6px 0 20px}
+@media(max-width:950px){.summary{grid-template-columns:repeat(3,minmax(0,1fr))}.diagnostics{grid-template-columns:1fr}.chart{height:420px}.short-chart{height:250px}}
+@media(max-width:540px){main{padding:18px 12px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.stat{padding:12px}.value{font-size:21px}.panel{padding:14px}.controls{align-items:flex-start;gap:12px}.chart{height:400px}}
+</style>
+</head>
+<body>
+<main>
+  <header><div><div class="eyebrow">OPENPI / TRAINING MONITOR</div><h1>π0.5 · LIBERO4Mix</h1><p class="muted">Flow2Act · 训练 loss 与优化过程</p></div><div><span class="badge" id="stage"></span><span class="badge" id="batch"></span><span class="badge" id="memory"></span></div></header>
+  <div id="run-name" class="path"></div>
+  <div class="panel-head"><span id="last-write" class="status"></span><label class="status"><input id="live" type="checkbox" checked>每 10 秒自动刷新 <button id="refresh" type="button">立即刷新</button></label></div>
+  <div class="summary">
+    <div class="stat"><div class="label">Optimizer 更新</div><div class="value" id="step">—</div><div class="detail" id="completion">—</div><div class="progress"><span id="progress"></span></div></div>
+    <div class="stat"><div class="label">最新总 loss</div><div class="value" id="last-loss">—</div><div class="detail" id="mean-loss">—</div></div>
+    <div class="stat"><div class="label">本次运行已用时间</div><div class="value" id="elapsed">—</div><div class="detail">包含首次 JAX 编译</div></div>
+    <div class="stat"><div class="label">预计剩余时间</div><div class="value" id="eta">—</div><div class="detail">采用训练入口记录的 ETA</div></div>
+    <div class="stat"><div class="label">最近更新耗时</div><div class="value" id="update-time">—</div><div class="detail" id="throughput">—</div></div>
+  </div>
+  <section class="panel">
+    <div class="panel-head"><h2>Loss 曲线</h2><span class="status" id="fetch-status" aria-live="polite">加载中…</span></div>
+    <div class="controls">
+      <label>辅助 loss <select id="weights"><option value="raw">原始值</option><option value="weighted">乘训练权重</option></select></label>
+      <label>纵轴 <select id="scale"><option value="log">对数</option><option value="linear">线性</option></select></label>
+      <label>平滑窗口 <input id="smooth" type="range" min="1" max="1000" step="1" value="100"><output id="smooth-value">100</output></label>
+      <label><input id="raw" type="checkbox">叠加原始曲线</label>
+      <button id="reset" type="button">重置缩放</button>
+    </div>
+    <div id="loss-chart" class="chart" aria-label="交互式训练 loss 曲线"></div>
+    <div class="note">框选放大，滚轮缩放，双击复位；点击图例隐藏曲线，双击图例单独查看。平滑使用向后滚动均值，仅影响显示。对数轴不绘制非正数。</div>
+    <div id="formula" class="note"></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>各项 loss</h2><span class="status">原始值与加权贡献分别列出</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Loss</th><th>最新原始值</th><th id="mean-heading">最近 100 次均值</th><th>训练权重</th><th>最新加权贡献</th></tr></thead><tbody id="loss-table"></tbody></table></div>
+    <div id="data-note" class="note"></div>
+  </section>
+  <div class="diagnostics">
+    <section class="panel"><h2>学习率</h2><div id="lr-chart" class="chart short-chart"></div></section>
+    <section class="panel"><h2>梯度范数 · 裁剪前</h2><div id="grad-chart" class="chart short-chart"></div></section>
+  </div>
+  <footer>数据源：metrics_flow2act.jsonl · 横轴为 optimizer update；GA 累积完成后计数一次。页面只读取训练指标。</footer>
+</main>
+<script id="bootstrap" type="application/json">__BOOTSTRAP_JSON__</script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const state = {data: JSON.parse($("bootstrap").textContent), loading: false, revision: null};
+const series = [
+  {key:"loss", label:"Total", color:"#17243b"},
+  {key:"action", label:"Action", color:"#2563eb"},
+  {key:"static", label:"Static / DA3", color:"#c08407"},
+  {key:"motion2d", label:"Motion 2D", color:"#059669"},
+  {key:"motion3d", label:"Motion 3D", color:"#9333ea"}
+];
+const options = {responsive:true, scrollZoom:true, displaylogo:false, modeBarButtonsToRemove:["lasso2d","select2d"]};
+const fmt = value => value == null ? "—" : value.toLocaleString("en-US", {maximumSignificantDigits:6});
+function duration(value) {
+  if (value == null || !Number.isFinite(value)) return "待估算";
+  const s = Math.max(0, Math.round(value)), days = Math.floor(s/86400), h = Math.floor(s%86400/3600), m = Math.floor(s%3600/60);
+  return days ? `${days}天 ${h}时 ${m}分` : h ? `${h}时 ${m}分` : `${m}分 ${s%60}秒`;
+}
+function rolling(values, windowSize) {
+  let sum=0, count=0;
+  return values.map((v,i) => {
+    if (v != null) {sum+=v; count++;}
+    if (i >= windowSize && values[i-windowSize] != null) {sum-=values[i-windowSize]; count--;}
+    return count ? sum/count : null;
+  });
+}
+function weight(key) { return ["static","motion2d","motion3d"].includes(key) ? (state.data.config[key+"_weight"] ?? 0) : 1; }
+function average(values, windowSize) {
+  const tail=values.slice(-windowSize).filter(v=>v!=null);
+  return tail.length ? tail.reduce((a,b)=>a+b,0)/tail.length : null;
+}
+function layout(yTitle, kind="loss") {
+  return {margin:{t:18,r:22,b:52,l:70}, font:{family:"system-ui, sans-serif",size:12,color:"#61718a"},
+    paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",hovermode:"x unified",dragmode:"zoom",
+    uirevision:"flow2act-"+kind, xaxis:{title:"Optimizer update",gridcolor:"#edf1f6",zeroline:false,exponentformat:"none"},
+    yaxis:{title:yTitle,gridcolor:"#edf1f6",zeroline:false,type:kind==="loss"?$("scale").value:"linear",
+      uirevision:kind==="loss"?$("scale").value+$("weights").value:kind},
+    legend:{orientation:"h",x:0,y:1.09,font:{size:12}},hoverlabel:{font:{family:"system-ui",size:12}}};
+}
+async function render() {
+  const d=state.data, c=d.config, n=d.updates.length, last=n-1, w=Number($("smooth").value);
+  $("smooth-value").textContent=w;
+  $("mean-heading").textContent=`最近 ${w} 次均值`;
+  $("stage").textContent=c.stage+" · JAX";
+  $("batch").textContent=`GBS ${c.global_batch_size} / GA ${c.ga} / ${c.num_gpus} GPU`;
+  $("memory").textContent=`HA ${c.action_horizon} · HF ${c.future_horizon} · memory ${c.memory_length}`;
+  $("run-name").textContent=d.run_name;
+  $("last-write").textContent="指标更新时间："+new Date(d.mtime_ms).toLocaleString("zh-CN",{timeZone:"Asia/Shanghai",hour12:false})+"（北京时间）";
+  $("formula").textContent=`Total = Action + ${weight("static")} × Static + ${weight("motion2d")} × Motion 2D + ${weight("motion3d")} × Motion 3D`;
+  if (!n) {$("fetch-status").textContent="尚无完整的更新记录"; return;}
+  const latest=key=>d.columns[key][last], completed=d.updates[last], percent=100*completed/c.max_steps;
+  $("step").textContent=completed.toLocaleString();
+  $("completion").textContent=`/ ${c.max_steps.toLocaleString()} · ${percent.toFixed(2)}%`;
+  $("progress").style.width=Math.min(percent,100)+"%";
+  $("last-loss").textContent=fmt(latest("loss"));
+  $("mean-loss").textContent=`最近 ${w} 次均值 ${fmt(average(d.columns.loss,w))}`;
+  $("elapsed").textContent=duration(latest("elapsed_seconds"));
+  $("eta").textContent=duration(latest("eta_seconds"));
+  $("update-time").textContent=latest("update_seconds")==null?"—":latest("update_seconds").toFixed(2)+" s";
+  $("throughput").textContent=latest("samples_per_second")==null?"—":latest("samples_per_second").toFixed(2)+" samples/s";
+  const weighted=$("weights").value==="weighted", log=$("scale").value==="log", traces=[];
+  const visible=values=>values.map(v=>v==null || (log&&v<=0)?null:v);
+  for (const item of series) {
+    const multiplier=weighted?weight(item.key):1, raw=d.columns[item.key].map(v=>v==null?null:v*multiplier);
+    const name=item.label+(weighted&&!["loss","action"].includes(item.key)?` ×${multiplier}`:"");
+    if ($("raw").checked && w>1) traces.push({x:d.updates,y:visible(raw),type:"scattergl",mode:"lines",name:name+" raw",
+      uid:item.key+"-raw",line:{color:item.color,width:1},opacity:.18,legendgroup:item.key,showlegend:false,hoverinfo:"skip"});
+    traces.push({x:d.updates,y:visible(rolling(raw,w)),type:"scattergl",mode:"lines",name,
+      uid:item.key,line:{color:item.color,width:item.key==="loss"?2.5:1.8},legendgroup:item.key,hovertemplate:"%{y:.6g}<extra>%{fullData.name}</extra>"});
+  }
+  $("loss-table").replaceChildren(...series.map(item=>{
+    const row=document.createElement("tr"), raw=latest(item.key);
+    const label=document.createElement("td"), swatch=document.createElement("span");
+    swatch.className="swatch";swatch.style.background=item.color;label.append(swatch,item.label);row.append(label);
+    [fmt(raw),fmt(average(d.columns[item.key],w)),item.key==="loss"?"合计":fmt(weight(item.key)),fmt(raw==null?null:raw*weight(item.key))].forEach(text=>{
+      const td=document.createElement("td");td.textContent=text;row.append(td);
+    });return row;
+  }));
+  const warnings=[];
+  if (d.invalid_lines) warnings.push(`${d.invalid_lines} 行无效记录未绘制`);
+  if (d.duplicate_updates) warnings.push(`${d.duplicate_updates} 条重复更新使用最后一条记录`);
+  if (d.partial_lines) warnings.push("末行正在写入，等待下一次刷新");
+  $("data-note").textContent=`已读取 ${n.toLocaleString()} 条更新记录。`+(warnings.length?" "+warnings.join("；"):"");
+  await Promise.all([
+    Plotly.react("loss-chart",traces,layout(weighted?"Loss / weighted contribution":"Loss（原始值）"),options),
+    Plotly.react("lr-chart",[{x:d.updates,y:d.columns.lr,type:"scattergl",mode:"lines",line:{color:"#2563eb",width:2},hovertemplate:"%{y:.6g}<extra>LR</extra>"}],layout("Learning rate","lr"),options),
+    Plotly.react("grad-chart",[{x:d.updates,y:d.columns.grad_norm,type:"scattergl",mode:"lines",line:{color:"#8b5cf6",width:1},opacity:.7,hovertemplate:"%{y:.6g}<extra>Grad norm</extra>"}],layout("Gradient norm","grad"),options)
+  ]);
+}
+async function refresh() {
+  if (state.loading || location.protocol==="file:") return;
+  state.loading=true;
+  try {
+    const headers=state.revision?{"If-None-Match":'"'+state.revision+'"'}:{};
+    const response=await fetch("api/metrics",{headers,cache:"no-store"});
+    if (response.status!==304) {
+      if (!response.ok) throw new Error("HTTP "+response.status);
+      const data=await response.json();
+      if (data.revision!==state.data.revision) {state.data=data;await render();}
+      state.revision=data.revision;
+    }
+    $("fetch-status").className="status online";
+    $("fetch-status").textContent="已连接 · "+new Date().toLocaleTimeString("zh-CN",{timeZone:"Asia/Shanghai",hour12:false});
+  } catch(error) {
+    $("fetch-status").className="status error";
+    $("fetch-status").textContent="刷新失败，保留已有曲线："+error.message;
+  } finally {state.loading=false;}
+}
+let renderTimer;
+["weights","scale","smooth","raw"].forEach(id=>$(id).addEventListener("input",()=>{
+  clearTimeout(renderTimer);renderTimer=setTimeout(()=>render().catch(showError),100);
+}));
+$("refresh").addEventListener("click",refresh);
+$("reset").addEventListener("click",()=>["loss-chart","lr-chart","grad-chart"].forEach(id=>Plotly.relayout(id,{"xaxis.autorange":true,"yaxis.autorange":true})));
+function showError(error) {$("fetch-status").className="status error";$("fetch-status").textContent="绘图失败："+error.message;}
+render().then(()=>{
+  if (location.protocol==="file:") {$("live").checked=false;$("fetch-status").textContent="离线快照 · 如需实时更新，请打开服务地址";}
+  else {state.revision=state.data.revision;refresh();}
+}).catch(showError);
+setInterval(()=>{if($("live").checked) refresh();},10000);
+</script>
+</body>
+</html>

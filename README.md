@@ -31,6 +31,31 @@
   ✉️ Co-corresponding authors
 </p>
 
+## Overview
+
+**Flow2Act** learns to act through geometrically grounded motion anticipation. It combines sparse decision history with learnable future queries and uses geometric and future-motion supervision to connect visual representations with action prediction.
+
+This repository hosts independent implementations built on different VLA backbones. Each project provides its own environment setup, data preparation, training, and evaluation instructions.
+
+## News
+
+- **[2026/11/26]** Added the OpenPI and Xiaomi-Robotics-0 implementations with LIBERO training and LIBERO / LIBERO-Plus evaluation guides.
+
 ## Architecture
 
 ![Flow2Act architecture showing sparse decision history, learnable future queries, depth and 2D/3D displacement supervision, and the action expert.](assets/pipeline.png)
+
+## Get Started
+
+Choose an implementation and follow its README:
+
+| Implementation | Base Model | Getting Started |
+| --- | --- | --- |
+| **Flow2Act-OpenPI** | OpenPI π0.5 (JAX) | [Setup, training, and evaluation](Flow2Act-openpi/README.md) |
+| **Flow2Act-XM0** | Xiaomi-Robotics-0 | [Setup, training, and evaluation](Flow2Act-xm0/README.md) |
+| **Flow2Act-GR00T** | Isaac GR00T | Coming soon |
+| **Flow2Act-LingBot** | LingBot-VLA-v2 | Coming soon |
+
+## Acknowledgements
+
+We thank the authors and contributors of [OpenPI](https://github.com/Physical-Intelligence/openpi), [Xiaomi-Robotics-0](https://github.com/XiaomiRobotics/Xiaomi-Robotics-0), [Isaac-GR00T](https://github.com/NVIDIA/Isaac-GR00T), [LingBot-VLA 2.0](https://github.com/Robbyant/lingbot-vla-v2), [Depth Anything 3](https://github.com/ByteDance-Seed/Depth-Anything-3), [Track4World](https://github.com/TencentARC/Track4World), [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO), [LIBERO-Plus](https://github.com/sylvestf/LIBERO-plus), [RoboTwin](https://github.com/RoboTwin-Platform/RoboTwin), and [Spatial Forcing](https://github.com/OpenHelix-Team/Spatial-Forcing) for their open-source work. Component attribution and license notices are provided in each implementation.

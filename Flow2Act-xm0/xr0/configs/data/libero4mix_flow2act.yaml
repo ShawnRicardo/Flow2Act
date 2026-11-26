@@ -1,0 +1,29 @@
+# @package _global_
+
+data:
+  type: BaseDataModuleFlow2Act
+  params:
+    type: libero_lerobot
+    seed: ${trainer.seed}
+    max_steps: ${trainer.max_steps}
+    gradient_accumulation_steps: ${trainer.accumulate_grad_batches}
+    num_workers: 4
+    prefetch_factor: 2
+    processor_path: ../checkpoints/Xiaomi-Robotics-0-Pretrain
+    train_datasets:
+      root: ../data/libero_lerobot
+      suites:
+        - libero_10_no_noops_1.0.0_lerobot
+        - libero_goal_no_noops_1.0.0_lerobot
+        - libero_object_no_noops_1.0.0_lerobot
+        - libero_spatial_no_noops_1.0.0_lerobot
+      stats_path: ../checkpoints/Flow2Act/libero4mix_H${data.params.train_datasets.action_length}_norm_stats_flow2act.json
+      batch_size: 16
+      action_length: ${model.params.model.action_shape.0}
+      augment: true
+      video_threads: 2
+      memory_length: ${model.params.model.memory_length}
+      execute_horizon: ${model.params.model.execute_horizon}
+      motion_cache_root: ../checkpoints/cache/libero4mix_motion3d_flow2act
+      stage: ${model.params.model.stage}
+      future_horizon: ${model.params.model.future_horizon}

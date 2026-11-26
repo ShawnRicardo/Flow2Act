@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - _self_
+  - data: libero4mix_flow2act
+  - model: flow2act
+  - trainer: deepspeed_flow2act
+
+hydra:
+  run:
+    dir: ${trainer.default_root_dir}/hydra

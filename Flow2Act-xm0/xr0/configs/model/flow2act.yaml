@@ -1,0 +1,36 @@
+# @package _global_
+# Modified for Flow2Act: horizon defaults match the public shell.
+# Use the shell to allocate per-GPU batch from GLOBAL_BATCH_SIZE and GA.
+model:
+  type: BaseRunnerFlow2Act
+  params:
+    pretrained: null
+    training_seed: ${trainer.seed}
+    teacher_weights_dir: null
+    teacher_cpu_offload: false
+    teacher_compute_device: cuda
+    teacher_mmap_weights: false
+    max_optimizer_group_elements: 0
+    expected_world_size: 0
+    checkpoint_kind: trained_policy
+    visualization:
+      every_n_steps: 0
+      output_dir: null
+    model:
+      type: Flow2ActXR0
+      state_shape: [1, 32]
+      action_shape: [30, 32]
+      dit_num_layers: 16
+      training_repeat: 4
+      enable_freq: true
+      prefix_mask_prob: 0.5
+      async_train: false
+      vlm_config_path: null
+      stage: baseline
+      future_horizon: 30
+      memory_length: 1
+      execute_horizon: 10
+      student_taps: [17, 23, 29, 35]
+      geo_loss_weight: 0.02
+      motion_2d_loss_weight: 1.0
+      motion_3d_loss_weight: 0.1

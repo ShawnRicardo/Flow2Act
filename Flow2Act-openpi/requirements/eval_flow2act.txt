@@ -1,0 +1,16 @@
+# Separate Python 3.10 simulator environments; policy training uses uv.lock.
+mujoco==2.3.7
+robosuite==1.4.0
+numpy==1.24.4
+gym==0.25.2
+bddl==1.0.1
+easydict==1.13
+opencv-python==4.6.0.66
+imageio==2.37.4
+cloudpickle==2.1.0
+PyYAML==6.0.3
+websockets==16.1.1
+msgpack==1.1.0
+Pillow>=9.0
+# Torch is used by the benchmark package, not the JAX policy. Install a
+# platform-compatible build separately, as in the upstream simulator setup.

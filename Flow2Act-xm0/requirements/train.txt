@@ -1,0 +1,23 @@
+# Versions recorded from the working policy environment. Install torch first.
+torch==2.8.0
+torchvision==0.23.0
+transformers==4.57.1
+lightning==2.5.3
+deepspeed==0.18.9
+accelerate==1.11.0
+safetensors==0.6.2
+huggingface-hub==0.36.2
+numpy==2.1.3
+Pillow==11.3.0
+pyarrow==25.0.1
+av==18.1.0
+mmengine==0.10.7
+omegaconf==2.3.0
+hydra-core==1.3.2
+einops==0.8.2
+matplotlib==3.11.2
+tqdm==4.70.1
+PyYAML==6.0.3
+# Optional logger backends; CSV is the default.
+wandb==0.23.1
+tensorboard==2.20.0

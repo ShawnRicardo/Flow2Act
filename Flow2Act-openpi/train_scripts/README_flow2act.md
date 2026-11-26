@@ -1,0 +1,18 @@
+# Flow2Act entries
+
+Use [the repository README](../README.md) for installation and launch commands,
+[the experiment contract](../docs/FLOW2ACT.md) for scientific defaults,
+[resource formats](../docs/RESOURCES_flow2act.md) for local inputs, and
+[the evaluation guide](../docs/EVALUATION_flow2act.md) for 8-GPU benchmarks.
+
+- `train_pi05_libero_flow2act.sh`: one-host JAX training; hyperparameters and paths
+  are exposed at the top and determine the output directory. Missing normalization
+  statistics are computed automatically; existing statistics are validated and reused.
+  The default is `STAGE=motion3d MEMORY_LENGTH=3` (current + t−10 + t−20).
+- `resume_pi05_libero_flow2act.sh`: requires explicit `RESUME_CHECKPOINT`; restores
+  the saved configuration, including GA; supports `--dry-run`.
+
+No local run directory or checkpoint is selected by default in the publication copy.
+Preprocessing entries are in `preprocess/`; local policy import is
+`scripts/import_checkpoint_flow2act.py`. Their resource layouts are described in
+the linked guides.

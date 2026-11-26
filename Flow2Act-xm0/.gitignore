@@ -1,0 +1,26 @@
+# Runtime storage is configured separately; never publish local links/artifacts.
+/data
+/checkpoints
+/results
+/xr0/data
+/xr0/pretrained_ckpt
+/xr0/results
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+.vscode/
+.DS_Store
+._*
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.npz
+*.npy
+*.zip
+*.log
+wandb/
