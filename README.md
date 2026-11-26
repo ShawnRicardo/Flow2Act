@@ -2,18 +2,19 @@
 
 <p align="center">
   <a href="https://shawnricardo.github.io/">Lijun Guo</a><sup>1,&#42;</sup>,
-  <a href="https://maxwell-zhao.github.io/">Haoyu Zhao</a><sup>2,&#42;</sup>,
-  Xianda Guo<sup>1</sup>, Chengwei Wu<sup>3</sup>, Yetong Zeng<sup>4</sup>,
-  Chenglong Zhang<sup>5</sup>, Qian Zhou<sup>1</sup>, Zhongyu Li<sup>2</sup>,
+  <a href="https://maxwell-zhao.github.io/">Haoyu Zhao</a><sup>2,3,&#42;</sup>,
+  Xianda Guo<sup>1,†</sup>, Chengwei Wu<sup>4</sup>, Yetong Zeng<sup>3,5</sup>,
+  Chenglong Zhang<sup>6</sup>, Qian Zhou<sup>1</sup>, Zhongyu Li<sup>2,3,✉️</sup>,
   and Hua Zou<sup>1,✉️</sup>
 </p>
 
 <p align="center">
   <sup>1</sup>&nbsp;Wuhan University &emsp;
   <sup>2</sup>&nbsp;The Chinese University of Hong Kong &emsp;
-  <sup>3</sup>&nbsp;NIO &emsp;
-  <sup>4</sup>&nbsp;University of Hong Kong &emsp;
-  <sup>5</sup>&nbsp;Nanjing University
+  <sup>3</sup>&nbsp;Hong Kong Embodied AI Lab &emsp;
+  <sup>4</sup>&nbsp;NIO &emsp;
+  <sup>5</sup>&nbsp;University of Hong Kong &emsp;
+  <sup>6</sup>&nbsp;Nanjing University
 </p>
 
 <p align="center">
@@ -26,7 +27,8 @@
 
 <p align="center">
   <sup>&#42;</sup> Equal contribution &emsp;
-  ✉️ Corresponding author
+  <sup>†</sup> Project Lead &emsp;
+  ✉️ Co-corresponding authors
 </p>
 
 ## Architecture
