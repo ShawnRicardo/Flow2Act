@@ -327,7 +327,7 @@ def main(argv=None):
     args = parse_args(argv)
     if args.command == "checkpoint":
         output = import_checkpoint(args.source, args.output)
-        print(f"Inference-only checkpoint written to {output}; optimizer resume state was not exported")
+        print(f"Inference-only checkpoint written to {output}")
     elif args.command == "motion-cache":
         print(import_motion_cache(args.source, args.output, link_mode=args.link_mode))
     else:

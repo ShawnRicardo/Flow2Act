@@ -1,6 +1,5 @@
 """Scientific contracts for the depth-only frozen-policy reconstruction path."""
 from pathlib import Path
-import copy
 import math
 import sys
 import unittest
@@ -15,7 +14,6 @@ from flow2act.depth_probe import (
     depth_only_losses_flow2act, depth_metric_sums_flow2act,
     finalize_depth_metrics_flow2act, stratified_episode_split_flow2act,
     episode_frame_indices_flow2act, encode_probe_teacher_depthonly_flow2act,
-    validate_depthonly_resume_flow2act,
 )
 
 
@@ -309,22 +307,6 @@ class DepthOnlyProbeTestsFlow2Act(unittest.TestCase):
         self.assertFalse(train_frames & val_frames)
         self.assertEqual(train_frames | val_frames, set(range(200)))
 
-    def test_resume_rejects_old_kind_and_any_scientific_config_change(self):
-        saved = {"kind": "independent_depth_adapter_depthonly_flow2act",
-                 "policy_checkpoint": "/tmp/policyA.pt", "policy_global_step": 100,
-                 "policy_contract": {"stage": "static", "student_taps": [17, 23, 29, 35]},
-                 "probe_config": {"width": 512}, "split": {"seed": 42},
-                 "training_config": {"log_depth_weight": 0.1, "lr": 1e-4}}
-        args = {name: copy.deepcopy(saved[name]) for name in saved if name != "kind"}
-        validate_depthonly_resume_flow2act(saved, **args)
-        for key, new in (("policy_checkpoint", "/tmp/policyB.pt"), ("policy_global_step", 200),
-                         ("policy_contract", {"stage": "motion3d"}), ("probe_config", {"width": 128}),
-                         ("split", {"seed": 43}), ("training_config", {"log_depth_weight": 0})):
-            with self.subTest(key=key), self.assertRaises(ValueError):
-                validate_depthonly_resume_flow2act(saved, **{**args, key: new})
-        with self.assertRaises(ValueError):
-            validate_depthonly_resume_flow2act(
-                {**saved, "kind": "independent_depth_probe_flow2act"}, **args)
 
     def test_probe_update_preserves_real_tiny_policy_actions(self):
         from xr0.tests.test_vlm_suffix_flow2act import tiny_policy, tiny_batch

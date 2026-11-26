@@ -20,7 +20,7 @@ def main_flow2act():
     )
     print(f"Imported EMA update={step}, stage={cfg.stage}, memory_length={cfg.memory_length}: {args.output}")
     print(
-        "Tensor values and norm stats are unchanged. This EMA-only checkpoint supports inference, not training resume."
+        "Tensor values and norm stats are unchanged. This EMA-only checkpoint supports inference."
     )
 
 

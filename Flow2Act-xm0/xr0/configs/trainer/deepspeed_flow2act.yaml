@@ -47,9 +47,6 @@ trainer:
   output_dir: null # Optional exact output path without project/experiment suffixes.
   enable_checkpointing: true
 
-  # Restore from checkpoint
-  ckpt_path: null # "last" or "best" or path/to/ckpt
-
   # Profiling
   profiler: null
 

@@ -5,7 +5,6 @@ import dataclasses
 import json
 import os
 from pathlib import Path
-import re
 
 import flax.nnx as nnx
 import flax.struct as struct
@@ -67,7 +66,7 @@ def check_base_flow2act(loaded, expected):
                 raise ValueError(f"Non-finite base weight: {key}")
 
 
-def initialize_flow2act(cfg, mesh, *, resume=False, base_config=None):
+def initialize_flow2act(cfg, mesh, *, base_config=None):
     tx = AdamW().create(cfg.schedule)
     init_key = jax.random.fold_in(jax.random.key(cfg.seed), 0x42415345)
 
@@ -83,8 +82,6 @@ def initialize_flow2act(cfg, mesh, *, resume=False, base_config=None):
     # GraphDef is static; its base weights have exactly the native scanned paths.
     shape, graphdef = jax.eval_shape(initialize, init_key)
     state_sharding = sharding.fsdp_sharding(shape, mesh)
-    if resume:
-        return shape, state_sharding, graphdef, tx
     loaded = restore_params(cfg.base_params, restore_type=np.ndarray)
     check_base_flow2act(loaded, shape.params.to_pure_dict())
     partial_sharding = sharding.fsdp_sharding(loaded, mesh)
@@ -153,25 +150,3 @@ def save_checkpoint_flow2act(output, state, cfg, norm_content):
     final.chmod(0o777)
     permissions_flow2act(final)
     return final
-
-
-def restore_checkpoint_flow2act(path, target, cfg, norm_content):
-    path = Path(path).resolve()
-    if not re.fullmatch(r"checkpoint-[1-9][0-9]*", path.name) or path.parent.name != "checkpoints":
-        raise ValueError("Resume requires an explicit checkpoints/checkpoint-N path")
-    saved = json.loads((path / "config_flow2act.json").read_text())
-    for field in ("output_dir", "resume_checkpoint", "workers", "log_interval", "stop_after_updates"):
-        saved.pop(field, None)
-    if saved != json.loads(json.dumps(cfg.experiment_dict())):
-        raise ValueError("Resume experiment configuration mismatch")
-    if json.loads((path / "norm_stats.json").read_text()) != json.loads(norm_content):
-        raise ValueError("Resume normalization statistics mismatch")
-    with ocp.Checkpointer(ocp.StandardCheckpointHandler()) as checkpointer:
-        result = checkpointer.restore(path / "state", args=ocp.args.StandardRestore(target))
-    step = int(jax.device_get(result.step))
-    if (
-        path.name != f"checkpoint-{step}"
-        or int(jax.device_get(result.sampler_position)) != step * cfg.global_batch_size
-    ):
-        raise ValueError("Checkpoint number/global step/sampler cursor mismatch")
-    return result

@@ -13,8 +13,7 @@ def pretrain_base_directory_flow2act(checkpoint_path):
     path = Path(checkpoint_path).expanduser()
     message = (
         "Fresh Flow2Act training requires the complete Xiaomi-Robotics-0-Pretrain "
-        "directory with its original preprocessor_config.json. "
-        "Use trainer.ckpt_path for your Flow2Act checkpoint resume."
+        "directory with its original preprocessor_config.json."
     )
     if not path.is_dir():
         raise ValueError(message)

@@ -8,7 +8,6 @@ from __future__ import annotations
 from contextlib import nullcontext
 from dataclasses import asdict, dataclass
 import math
-from pathlib import Path
 
 import torch
 from torch import nn
@@ -18,9 +17,6 @@ from .probe_common import (
     episode_frame_indices_flow2act,
     stratified_episode_split_flow2act,
 )
-
-DEPTHONLY_KIND_FLOW2ACT = "independent_depth_adapter_depthonly_flow2act"
-
 
 @dataclass(frozen=True)
 class Flow2ActDepthProbeConfig:
@@ -182,21 +178,6 @@ def encode_probe_teacher_depthonly_flow2act(teacher, raw_images):
         del pyramid, features, decoded, value
     # Do not return or retain a dense teacher feature target in this route.
     return {"depth": torch.cat(depths), "confidence": torch.cat(confidences)}
-
-
-def validate_depthonly_resume_flow2act(saved, *, policy_checkpoint, policy_global_step,
-                                           policy_contract, probe_config, split, training_config):
-    if saved.get("kind") != DEPTHONLY_KIND_FLOW2ACT:
-        raise ValueError("resume-probe is not an independent depth-only adapter checkpoint")
-    if not saved.get("policy_checkpoint"):
-        raise ValueError("Depth-only resume is missing the source policy checkpoint")
-    same_path = Path(saved["policy_checkpoint"]).resolve() == Path(policy_checkpoint).resolve()
-    if not same_path or saved.get("policy_global_step") != policy_global_step:
-        raise ValueError("Depth-only resume must use the original policy checkpoint path and policy step")
-    for key, expected in (("policy_contract", policy_contract), ("probe_config", probe_config),
-                          ("split", split), ("training_config", training_config)):
-        if saved.get(key) != expected:
-            raise ValueError(f"Depth-only resume {key} differs")
 
 
 @torch.no_grad()

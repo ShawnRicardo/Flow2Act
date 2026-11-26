@@ -26,7 +26,6 @@ from openpi.flow2act.teacher_flow2act import teacher_targets_flow2act
 from openpi.flow2act.training_flow2act import gradient_flow2act
 from openpi.flow2act.training_flow2act import initialize_flow2act
 from openpi.flow2act.training_flow2act import permissions_flow2act
-from openpi.flow2act.training_flow2act import restore_checkpoint_flow2act
 from openpi.flow2act.training_flow2act import save_checkpoint_flow2act
 from openpi.flow2act.training_flow2act import teacher_batch_flow2act
 from openpi.flow2act.training_flow2act import update_flow2act
@@ -174,20 +173,10 @@ def main_flow2act():
             np.testing.assert_array_equal(first, second)
         norm = Path(cfg.norm_stats, "norm_stats.json").read_text()
         path = save_checkpoint_flow2act(root, results[0], cfg, norm)
-        target = jax.tree.map(
-            lambda shape, spec: jax.ShapeDtypeStruct(shape.shape, shape.dtype, sharding=spec),
-            jax.eval_shape(lambda: results[0]),
-            state_spec,
-        )
-        restored = restore_checkpoint_flow2act(path, target, cfg, norm)
-        for first, second in zip(jax.tree.leaves(results[0]), jax.tree.leaves(restored), strict=True):
-            np.testing.assert_array_equal(first, second)
-        assert all(
-            value.sharding == spec
-            for value, spec in zip(jax.tree.leaves(restored), jax.tree.leaves(state_spec), strict=True)
-        )
+        assert (path / "state").is_dir()
+        assert (path / "norm_stats.json").read_text() == norm
     permissions_flow2act(root)
-    print(f"4 CPU devices: actual native small backbone FSDP, GA1/GA2, EMA, sharded resume passed; {root}")
+    print(f"4 CPU devices: actual native small backbone FSDP, GA1/GA2, EMA, checkpoint save passed; {root}")
 
 
 if __name__ == "__main__":

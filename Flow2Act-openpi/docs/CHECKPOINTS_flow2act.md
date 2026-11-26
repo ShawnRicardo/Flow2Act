@@ -40,9 +40,8 @@ memory length, seed and auxiliary weights, is taken from the source checkpoint.
 An old memory=1 checkpoint remains memory=1; import does not train memory modules.
 
 The deployment directory contains `config_flow2act.json`, `norm_stats.json`, and
-an Orbax `state/` with `ema` and `step`. Optimizer and live weights are not copied,
-so this directory cannot resume training. Resume uses the original full training
-checkpoint with parameters, EMA, optimizer, RNG and sampler state.
+an Orbax `state/` with `ema` and `step` for inference. Optimizer and live weights
+are not included in the deployment package.
 
 ## Policies trained in this repository
 

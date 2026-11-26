@@ -107,21 +107,12 @@ MAX_STEPS=30000 SAVE_INTERVAL=5000 \
 bash train_scripts/train_pi05_libero_flow2act.sh
 ```
 
-To resume, specify a complete training checkpoint. The saved configuration,
-optimizer state, and normalization statistics are restored:
-
-```bash
-RESUME_CHECKPOINT="outputs_flow2act/pi05/libero4mix/<run>/checkpoints/checkpoint-20000" \
-bash train_scripts/resume_pi05_libero_flow2act.sh
-```
-
 ## 4. Inference and Evaluation
 
 Use a checkpoint trained with this project directly for inference and evaluation.
 Inference loads the EMA policy, normalization statistics, and local tokenizer;
 DA3 weights and motion caches are only needed during training. To import an
 existing local JAX policy, follow the [checkpoint guide](docs/CHECKPOINTS_flow2act.md).
-Imported EMA-only packages support inference; resume requires a full training checkpoint.
 
 Install the separate LIBERO and LIBERO-Plus environments and assets using the
 [evaluation guide](docs/EVALUATION_flow2act.md), then evaluate all four suites on

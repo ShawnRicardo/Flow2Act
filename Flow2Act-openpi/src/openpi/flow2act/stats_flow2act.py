@@ -29,8 +29,8 @@ def compute_stats_flow2act(windows):
     return json.dumps(content, indent=2) + "\n"
 
 
-def prepare_stats_flow2act(windows, output_dir, *, if_missing=False, resume_checkpoint=""):
-    """Compute once for fresh runs; resume always uses the checkpoint's exact statistics."""
+def prepare_stats_flow2act(windows, output_dir, *, if_missing=False):
+    """Compute missing statistics or reuse a validated cache."""
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     final = output / "norm_stats.json"
@@ -38,31 +38,21 @@ def prepare_stats_flow2act(windows, output_dir, *, if_missing=False, resume_chec
     directory_fd = os.open(output, os.O_RDONLY)
     try:
         fcntl.flock(directory_fd, fcntl.LOCK_EX)
-        saved = None
-        if resume_checkpoint:
-            load_stats_flow2act(resume_checkpoint, windows)
-            saved = (Path(resume_checkpoint) / "norm_stats.json").read_text()
         if final.exists():
             if not if_missing:
                 raise FileExistsError(f"Refusing to overwrite existing norm stats: {final}")
             load_stats_flow2act(output, windows)
             content = final.read_text()
-            if saved is not None and json.loads(content) != json.loads(saved):
-                raise ValueError("Resume normalization statistics mismatch")
             logging.info("Using existing normalization statistics: %s", final)
-            return saved if saved is not None else content
+            return content
         if any(output.iterdir()):
             raise FileExistsError(f"Refusing to write into nonempty stats directory: {output}")
-        if saved is None:
-            logging.info(
-                "Computing normalization statistics over %d complete H%d windows (CPU, no video decoding)",
-                len(windows),
-                windows.horizon,
-            )
-            content = compute_stats_flow2act(windows)
-        else:
-            logging.info("Restoring normalization statistics from %s", resume_checkpoint)
-            content = saved
+        logging.info(
+            "Computing normalization statistics over %d complete H%d windows (CPU, no video decoding)",
+            len(windows),
+            windows.horizon,
+        )
+        content = compute_stats_flow2act(windows)
         output.chmod(0o777)
         temporary = output / "norm_stats_flow2act.tmp"
         stream = temporary.open("x")

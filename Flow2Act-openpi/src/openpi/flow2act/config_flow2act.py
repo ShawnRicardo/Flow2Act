@@ -47,7 +47,6 @@ class Flow2ActConfig:
     motion_cache: str = "data/libero4mix_motion3d_flow2act"
     norm_stats: str = "assets/libero4mix_H30_flow2act"
     output_dir: str = ""
-    resume_checkpoint: str = ""
 
     def validate(self):
         if self.stage not in ("baseline", "static", "motion2d", "motion3d"):
@@ -116,9 +115,3 @@ class Flow2ActConfig:
             f"_w{self.static_weight:g}-{self.motion2d_weight:g}-{self.motion3d_weight:g}"
         )
         return str(Path("outputs_flow2act/pi05/libero4mix") / name)
-
-    def experiment_dict(self):
-        result = dataclasses.asdict(self)
-        for key in ("output_dir", "resume_checkpoint", "workers", "log_interval", "stop_after_updates"):
-            result.pop(key)
-        return result

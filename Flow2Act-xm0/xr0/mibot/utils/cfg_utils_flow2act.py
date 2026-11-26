@@ -28,8 +28,6 @@ def helper(cfg: DictConfig) -> Config:
     """
     # Resolve config
     cfg = Config(OmegaConf.to_container(cfg, resolve=True))
-    # DeepSpeed restores after on_fit_start; Trainer.ckpt_path can still be None there.
-    cfg.model.params.resume_requested = bool(cfg.trainer.get("ckpt_path"))
     process_save_cfg(cfg)
 
     # Keep PL_GLOBAL_SEED common across ranks so DistributedSampler partitions one permutation.
@@ -112,10 +110,9 @@ def process_save_cfg(cfg: Config) -> None:
 
     output = Path(root_dir)
     has_checkpoint = os.path.lexists(output / "last.ckpt") or any(output.glob("step-*_flow2act.ckpt"))
-    if not cfg.trainer.get("ckpt_path") and has_checkpoint:
-        raise FileExistsError(f"Checkpoint already exists in {root_dir}; choose a new output directory or set trainer.ckpt_path.")
+    if has_checkpoint:
+        raise FileExistsError(f"Checkpoint already exists in {root_dir}; choose a new output directory.")
     os.makedirs(root_dir, exist_ok=True)
     if int(os.environ.get("RANK", 0)) == 0:
         cfg.dump(os.path.join(root_dir, "config_flow2act.yaml"))
         cfg.dump(os.path.join(root_dir, "config_flow2act.py"))
-

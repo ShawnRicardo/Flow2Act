@@ -13,7 +13,6 @@ PROCESSOR_PATH="${PROCESSOR_PATH:-${CHECKPOINT_ROOT}/Xiaomi-Robotics-0-Pretrain}
 TEACHER_WEIGHTS_DIR="${TEACHER_WEIGHTS_DIR:-${CHECKPOINT_ROOT}/da3_flow2act}"
 OUTPUT_ROOT="${OUTPUT_ROOT:-${REPO_ROOT}/results/probe/Flow2Act/DepthOnly}"
 OUTPUT_DIR="${OUTPUT_DIR:-}"
-RESUME_PROBE="${RESUME_PROBE:-}"
 GLOBAL_BATCH_SIZE="${GLOBAL_BATCH_SIZE:-32}"
 GRAD_ACCUM="${GRAD_ACCUM:-1}"
 MAX_STEPS="${MAX_STEPS:-5000}"
@@ -56,7 +55,7 @@ BATCH_PER_GPU=$((GLOBAL_BATCH_SIZE/(TOTAL_GPUS*GRAD_ACCUM)))
 export NNODES NPROC_PER_NODE NODE_RANK MASTER_ADDR MASTER_PORT
 TRAIN_ARGS=(
  --policy-checkpoint "${POLICY_CHECKPOINT}" --data-root "${DATA_ROOT}" --processor-path "${PROCESSOR_PATH}"
- --teacher-weights-dir "${TEACHER_WEIGHTS_DIR}" --output-root "${OUTPUT_ROOT}" --output-dir "${OUTPUT_DIR}" --resume-probe "${RESUME_PROBE}"
+ --teacher-weights-dir "${TEACHER_WEIGHTS_DIR}" --output-root "${OUTPUT_ROOT}" --output-dir "${OUTPUT_DIR}"
  --global-batch-size "${GLOBAL_BATCH_SIZE}" --grad-accum "${GRAD_ACCUM}" --max-steps "${MAX_STEPS}"
  --lr "${LR}" --min-lr "${MIN_LR}" --warmup-steps "${WARMUP_STEPS}" --weight-decay "${WEIGHT_DECAY}"
  --clip-grad-norm "${CLIP_GRAD_NORM}" --si-log-weight "${SI_LOG_WEIGHT}" --gradient-weight "${GRADIENT_WEIGHT}" --log-depth-weight "${LOG_DEPTH_WEIGHT}"

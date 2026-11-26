@@ -8,8 +8,6 @@ Use [the repository README](../README.md) for installation and launch commands,
 - `train_pi05_libero_flow2act.sh`: one-host JAX training; hyperparameters and paths
   are exposed at the top and determine the output directory. Missing normalization
   statistics are computed automatically; existing statistics are validated and reused.
-- `resume_pi05_libero_flow2act.sh`: requires explicit `RESUME_CHECKPOINT`; restores
-  the saved configuration, including GA; supports `--dry-run`.
 
 No local run directory or checkpoint is selected by default in the publication copy.
 Preprocessing entries are in `preprocess/`; local policy import is

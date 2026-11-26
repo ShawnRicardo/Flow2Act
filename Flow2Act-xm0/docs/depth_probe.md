@@ -68,7 +68,7 @@ L = SI_LOG_WEIGHT × SI-log
 
 只使用 Teacher 有限正深度且 confidence>1 的像素，以 `(confidence−1)/confidence` 加权。相机、样本等权，空证据样本产生连接计算图的零损失。预测非有限或非正深度明确报错。Teacher 深度不是已知的米制真值。
 
-## 日志、可视化与恢复
+## 日志与可视化
 
 `log.log` 保存完整控制台输出；各节点另有 `console_nodeN_DepthOnly_flow2act.log` 和 torchrun 分 rank 原始日志。训练失败保留原始退出码。
 
@@ -85,7 +85,6 @@ OUTPUT_DIR/val_depth/step_XXXXXXX/<suite>_episode..._frame.../
 
 Teacher 和 Student 使用相同的 Teacher 色标。原始预测不进行尺度对齐。验证指标另记录原尺度、每样本双相机共享尺度对齐后的 AbsRel/RMSE/δ1，以及有效像素比例和各相机分项。默认 `VAL_MAX_BATCHES=0` 验证全部留出帧；仅在调试时限制该值。
 
-Adapter checkpoint 为 `probe_step_XXXXXXX_DepthOnly_flow2act.pt`，包含 Adapter、optimizer、scheduler、更新计数、源策略契约、损失配置和 episode 划分。恢复时设置相同 `POLICY_CHECKPOINT`、配方与明确的 `RESUME_PROBE`；`MAX_STEPS` 表示最终总更新数，不是额外步数。可以使用同一输出目录，禁止把原混合损失 probe 当作 DepthOnly 恢复。不承诺数据迭代器逐位续接。
 
 以上指标衡量相对 DA3 伪标签的一致性，不能单独证明真实米制深度精度、完整 DA3 特征恢复或策略成功率提升。
 
@@ -97,4 +96,4 @@ PYTHONPATH=.:xr0 python -m unittest \
   xr0.tests.test_depthonly_entry_flow2act
 ```
 
-这些测试覆盖纯深度梯度、冻结边界、mask、尺度、episode split、恢复契约、分布式参数和日志退出码，不等同于全量GPU训练验证。
+这些测试覆盖纯深度梯度、冻结边界、mask、尺度、episode split、分布式参数和日志退出码，不等同于全量GPU训练验证。

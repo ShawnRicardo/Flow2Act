@@ -32,7 +32,6 @@ class BaseRunnerFlow2Act(LightningModule):
         """
         super().__init__()
         self._training_seed = int(params.get("training_seed", 42))
-        self._resume_requested = bool(params.get("resume_requested", False))
         self._teacher_dir = params.get("teacher_weights_dir")
         self._teacher_cpu_offload = params.get("teacher_cpu_offload", False)
         if type(self._teacher_cpu_offload) is not bool:
@@ -187,11 +186,8 @@ class BaseRunnerFlow2Act(LightningModule):
         return self._teacher
 
     def on_fit_start(self):
-        # Extra stage parameters consume RNG during construction. Align fresh runs
-        # after DeepSpeed setup. Explicit resumes skip this fresh-run alignment;
-        # this is not a claim that native checkpoints restore every RNG stream.
-        if not self._resume_requested and not getattr(self.trainer, "ckpt_path", None):
-            seed_everything(self._training_seed, workers=True)
+        # Extra stage parameters consume RNG during construction. Align runs after DeepSpeed setup.
+        seed_everything(self._training_seed, workers=True)
         if self._expected_world_size and int(self.trainer.world_size) != self._expected_world_size:
             raise ValueError(f"Actual world_size={self.trainer.world_size} differs from TOTAL_GPUS={self._expected_world_size}")
         self._effective_batch_contract()

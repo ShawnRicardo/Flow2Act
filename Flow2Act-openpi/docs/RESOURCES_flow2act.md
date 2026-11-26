@@ -68,8 +68,6 @@ directory serialize preparation with a directory lock; no lock file is created.
 
 The Shell defaults to `assets/libero4mix_H${ACTION_HORIZON}_flow2act`; `NORM_STATS`
 overrides the directory. Select a fresh directory when changing the data.
-On resume, the checkpoint's exact statistics are reused and restore a missing
-stats cache; statistics are not recomputed. A conflicting cache is rejected.
 
 The standalone tool remains available for optional preparation before allocating
 training GPUs:

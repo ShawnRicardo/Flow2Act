@@ -41,7 +41,6 @@ TEACHER_PATH=${TEACHER_PATH:-checkpoints/da3_flow2act/da3_giant_flow2act.safeten
 # An existing shared native-UV cache can be passed directly; training never exports labels.
 MOTION_CACHE=${MOTION_CACHE:-data/libero4mix_motion3d_flow2act}
 NORM_STATS=${NORM_STATS:-assets/libero4mix_H${ACTION_HORIZON}_flow2act}
-RESUME_CHECKPOINT=${RESUME_CHECKPOINT:-}
 OUTPUT_DIR=${OUTPUT_DIR:-outputs_flow2act/pi05/libero4mix/${STAGE}_mem${MEMORY_LENGTH}_HA${ACTION_HORIZON}_HF${FUTURE_HORIZON}_M${EXECUTE_HORIZON}_gpu${NUM_GPUS}_fsdp${FSDP_DEVICES}_GBS${GLOBAL_BATCH_SIZE}_GA${GA}_lr${LR}-${FINAL_LR}_wu${WARMUP_STEPS}-${WARMUP_LR}_ema${EMA_DECAY}_steps${MAX_STEPS}_save${SAVE_INTERVAL}_seed${SEED}_taps${STUDENT_TAPS//,/-}_w${STATIC_WEIGHT}-${MOTION2D_WEIGHT}-${MOTION3D_WEIGHT}}
 
 export PYTHONPATH="${REPO_ROOT}/src:${REPO_ROOT}/packages/openpi-client/src${PYTHONPATH:+:${PYTHONPATH}}"
@@ -60,7 +59,7 @@ printf 'JAX single host, one process; CUDA_VISIBLE_DEVICES=%s; GPUs=%s FSDP=%s\n
 printf 'STAGE=%s GBS=%s GA=%s microbatch/device=%s HA=%s HF=%s execute=%s memory=%s\n' "${STAGE}" "${GLOBAL_BATCH_SIZE}" "${GA}" "$((GLOBAL_BATCH_SIZE / NUM_GPUS / GA))" "${ACTION_HORIZON}" "${FUTURE_HORIZON}" "${EXECUTE_HORIZON}" "${MEMORY_LENGTH}"
 printf 'OUTPUT_DIR=%s\n' "${OUTPUT_DIR}"
 
-if [[ -z ${RESUME_CHECKPOINT} && -d ${OUTPUT_DIR} && -n $(find -P "${OUTPUT_DIR}" -mindepth 1 -maxdepth 1 -print -quit) ]]; then
+if [[ -d ${OUTPUT_DIR} && -n $(find -P "${OUTPUT_DIR}" -mindepth 1 -maxdepth 1 -print -quit) ]]; then
     printf 'Fresh training refuses nonempty OUTPUT_DIR: %s\n' "${OUTPUT_DIR}" >&2
     exit 2
 fi
@@ -81,5 +80,4 @@ args=(
     --teacher-path "${TEACHER_PATH}" --motion-cache "${MOTION_CACHE}" --norm-stats "${NORM_STATS}" --output-dir "${OUTPUT_DIR}"
 )
 if [[ ${AUGMENT} == 1 ]]; then args+=(--augment); else args+=(--no-augment); fi
-if [[ -n ${RESUME_CHECKPOINT} ]]; then args+=(--resume-checkpoint "${RESUME_CHECKPOINT}"); fi
 "${REPO_ROOT}/.venv/bin/python" scripts/train_flow2act.py "${args[@]}"

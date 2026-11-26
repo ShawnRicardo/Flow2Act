@@ -54,7 +54,6 @@ def main_flow2act(cfg):
     from openpi.flow2act.teacher_flow2act import teacher_targets_flow2act
     from openpi.flow2act.training_flow2act import gradient_flow2act
     from openpi.flow2act.training_flow2act import initialize_flow2act
-    from openpi.flow2act.training_flow2act import restore_checkpoint_flow2act
     from openpi.flow2act.training_flow2act import save_checkpoint_flow2act
     from openpi.flow2act.training_flow2act import teacher_batch_flow2act
     from openpi.flow2act.training_flow2act import update_flow2act
@@ -68,17 +67,12 @@ def main_flow2act(cfg):
         raise ValueError("Training entry requires CUDA GPUs; CPU unit tests use the isolated primitives")
     output = Path(cfg.output_dir or cfg.default_output()).resolve()
     cfg = dataclasses.replace(cfg, output_dir=str(output))
-    if cfg.resume_checkpoint:
-        if Path(cfg.resume_checkpoint).resolve().parent.parent != output:
-            raise ValueError("Resume checkpoint must belong to the exact OUTPUT_DIR")
-    elif output.exists() and any(output.iterdir()):
+    if output.exists() and any(output.iterdir()):
         raise FileExistsError(f"Fresh run refuses nonempty OUTPUT_DIR: {output}")
     output.mkdir(parents=True, exist_ok=True)
     output.chmod(0o777)
     windows = Flow2ActWindows(cfg.data_root, cfg.action_horizon)
-    norm_content = prepare_stats_flow2act(
-        windows, cfg.norm_stats, if_missing=True, resume_checkpoint=cfg.resume_checkpoint
-    )
+    norm_content = prepare_stats_flow2act(windows, cfg.norm_stats, if_missing=True)
     mesh = sharding.make_mesh(cfg.fsdp_devices)
     data_shard = jax.sharding.NamedSharding(mesh, jax.sharding.PartitionSpec(sharding.DATA_AXIS))
     replicated = jax.sharding.NamedSharding(mesh, jax.sharding.PartitionSpec())
@@ -93,18 +87,12 @@ def main_flow2act(cfg):
         cfg.global_batch_size // (cfg.num_gpus * cfg.ga),
         dataset.windows.counts,
     )
-    state, state_sharding, graphdef, tx = initialize_flow2act(cfg, mesh, resume=bool(cfg.resume_checkpoint))
-    if cfg.resume_checkpoint:
-        target = jax.tree.map(
-            lambda shape, spec: jax.ShapeDtypeStruct(shape.shape, shape.dtype, sharding=spec), state, state_sharding
-        )
-        state = restore_checkpoint_flow2act(cfg.resume_checkpoint, target, cfg, norm_content)
-    # A rejected resume must not overwrite the existing run's configuration.
+    state, state_sharding, graphdef, tx = initialize_flow2act(cfg, mesh)
     (output / "config_flow2act.json").write_text(json.dumps(dataclasses.asdict(cfg), indent=2) + "\n")
     (output / "norm_stats.json").write_text(norm_content)
     (output / "config_flow2act.json").chmod(0o777)
     (output / "norm_stats.json").chmod(0o777)
-    sampler = Flow2ActSampler(len(dataset.windows), cfg.seed, int(jax.device_get(state.sampler_position)))
+    sampler = Flow2ActSampler(len(dataset.windows), cfg.seed)
     teacher = None
     teacher_call = None
     if cfg.stage != "baseline":
@@ -199,7 +187,7 @@ def main_flow2act(cfg):
                         raise FloatingPointError(f"Non-finite training metric at update {step + 1}: {metrics}")
                     finished = time.monotonic()
                     update_seconds = finished - started
-                    # Every fresh/resumed JAX process may compile on its first update.
+                    # The first JAX update may compile.
                     # Average subsequent wall time, including intervening checkpoint saves.
                     if steady_started is None:
                         steady_started = finished

@@ -1,4 +1,4 @@
-"""Real CPU Lightning tests for optimizer-update progress and resume."""
+"""Real CPU Lightning tests for optimizer-update progress."""
 
 import io
 from pathlib import Path
@@ -105,18 +105,6 @@ class OptimizerProgressTest(unittest.TestCase):
         self.assertNotIn("Epoch", rendered)
         self.assertNotIn("v_num", rendered)
 
-    def test_resume_starts_at_saved_update(self):
-        first = self.trainer(RecordingProgress(), accumulation=4, updates=2)
-        first.fit(LinearModel(), self.data())
-        checkpoint = str(Path(self.temp.name) / "step2.ckpt")
-        first.save_checkpoint(checkpoint)
-        progress = RecordingProgress()
-        resumed = self.trainer(progress, accumulation=4, updates=4)
-        resumed.fit(LinearModel(), self.data(), ckpt_path=checkpoint)
-        self.assertEqual(progress.initial_step, 2)
-        self.assertEqual(progress.progress_bar.n, 4)
-        self.assertEqual(progress.progress_bar.total, 4)
-        self.assertEqual(sum(after - before for _, before, after in progress.steps_after_batch), 2)
 
     def test_epoch_boundary_does_not_reset_update_counter(self):
         progress = RecordingProgress()

@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 import sys
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import hydra
 from lightning import LightningDataModule, LightningModule, Trainer
@@ -99,7 +99,7 @@ def prepare(cfg: Dict[str, Any]) -> Tuple[Config, LightningDataModule, Lightning
     elif logger_backend == "csv":
         cfg.trainer.pop("project")
         cfg.trainer.pop("exp_name")
-        # Native version directories preserve earlier logs on explicit resume.
+        # Use native logger version directories.
         logger = [CSVLogger(save_dir=cfg.trainer.default_root_dir, name="csv",
                             flush_logs_every_n_steps=1)]
     else:
@@ -116,9 +116,8 @@ def main(cfg: DictConfig) -> None:
     """Hydra entry point: prepare and launch training."""
     try:
         cfg, datamodule, model, logger = prepare(cfg)
-        ckpt_path: Optional[str] = cfg.trainer.pop("ckpt_path", None)
         trainer = Trainer(**cfg.trainer, logger=logger)
-        trainer.fit(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+        trainer.fit(model=model, datamodule=datamodule)
     finally:
         training_failed = sys.exc_info()[0] is not None
         if dist.is_available() and dist.is_initialized():

@@ -74,8 +74,8 @@ class Flow2ActWindows:
 class Flow2ActSampler:
     """Permutation by epoch; only consumed samples advance the checkpointed cursor."""
 
-    def __init__(self, size, seed, position=0):
-        self.size, self.seed, self.position = size, seed, position
+    def __init__(self, size, seed):
+        self.size, self.seed, self.position = size, seed, 0
         self.epoch, self.order = None, None
 
     def take(self, count):

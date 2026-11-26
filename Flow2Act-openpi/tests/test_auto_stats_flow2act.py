@@ -1,5 +1,5 @@
 # ruff: noqa: N802, N999
-"""Automatic normalization preserves complete-window weighting and saved resume values."""
+"""Automatic normalization preserves complete-window weighting and validated cached values."""
 
 from concurrent.futures import ThreadPoolExecutor
 import json
@@ -81,7 +81,7 @@ def test_fresh_stats_match_previous_algorithm_flow2act(tmp_path, training_window
 
 
 def fail_scan_flow2act(*args, **kwargs):
-    pytest.fail("Existing or resumed statistics must not scan training parquet")
+    pytest.fail("Existing statistics must not scan training parquet")
 
 
 def test_reuse_without_scanning_or_overwrite_flow2act(tmp_path, training_windows_flow2act, monkeypatch):
@@ -116,29 +116,6 @@ def test_reject_mismatched_stats_flow2act(tmp_path, training_windows_flow2act, m
     with pytest.raises(ValueError, match="[Nn]orm stats"):
         stats_flow2act.prepare_stats_flow2act(windows, output, if_missing=True)
     assert path.read_bytes() == before
-
-
-def test_resume_restores_exact_saved_stats_flow2act(tmp_path, training_windows_flow2act, monkeypatch):
-    windows, _ = training_windows_flow2act
-    checkpoint = tmp_path / "checkpoint-40000"
-    content = stats_flow2act.prepare_stats_flow2act(windows, checkpoint, if_missing=True) + "\n"
-    (checkpoint / "norm_stats.json").write_text(content)
-    monkeypatch.setattr(stats_flow2act, "parquet_flow2act", fail_scan_flow2act)
-    cache = tmp_path / "missing cache"
-    restored = stats_flow2act.prepare_stats_flow2act(windows, cache, if_missing=True, resume_checkpoint=checkpoint)
-    assert restored == content
-    assert (cache / "norm_stats.json").read_text() == content
-    altered = json.loads(content)
-    altered["norm_stats"]["state"]["std"][0] += 0.1
-    (cache / "norm_stats.json").write_text(json.dumps(altered))
-    before = (cache / "norm_stats.json").read_bytes()
-    with pytest.raises(ValueError, match="Resume normalization statistics mismatch"):
-        stats_flow2act.prepare_stats_flow2act(windows, cache, if_missing=True, resume_checkpoint=checkpoint)
-    assert (cache / "norm_stats.json").read_bytes() == before
-    with pytest.raises(FileNotFoundError):
-        stats_flow2act.prepare_stats_flow2act(
-            windows, tmp_path / "another cache", if_missing=True, resume_checkpoint=tmp_path / "missing checkpoint"
-        )
 
 
 def test_concurrent_launches_compute_once_flow2act(tmp_path, training_windows_flow2act, monkeypatch):

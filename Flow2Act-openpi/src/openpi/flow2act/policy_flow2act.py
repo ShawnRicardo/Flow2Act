@@ -60,6 +60,7 @@ def load_ema_flow2act(checkpoint, *, use_ema=True):
     path = Path(checkpoint).resolve()
     values = json.loads((path / "config_flow2act.json").read_text())
     values["student_taps"] = tuple(values["student_taps"])
+    values.pop("resume_checkpoint", None)  # Ignore obsolete training metadata.
     cfg = Flow2ActConfig(**values)
     cfg.validate()
     shape_module = nnx.eval_shape(lambda: Flow2ActPi05(cfg, nnx.Rngs(0)))

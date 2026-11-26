@@ -1,5 +1,5 @@
 # ruff: noqa: N801, N802, N999
-"""Real LIBERO/cache alignment, branch isolation and deterministic batch resume."""
+"""Real LIBERO/cache alignment, branch isolation and deterministic batches."""
 
 import dataclasses
 
@@ -56,14 +56,14 @@ def test_h30_tail_and_cache_branch_isolation_flow2act(monkeypatch):
 
 
 @pytest.mark.local_data
-def test_batch_rng_workers_and_resume_flow2act():
+def test_batch_rng_across_workers_flow2act():
     cfg = dataclasses.replace(Flow2ActConfig(), stage="static", workers=0, augment=True)
     serial = Flow2ActDataset(cfg)
     parallel = Flow2ActDataset(dataclasses.replace(cfg, workers=2))
     indices = np.array([0, 90478, 130108, 224367])
-    first, resumed = serial.batch(indices, 1280), parallel.batch(indices, 1280)
+    first, repeated = serial.batch(indices, 1280), parallel.batch(indices, 1280)
     for key in first:
-        np.testing.assert_array_equal(first[key], resumed[key])
+        np.testing.assert_array_equal(first[key], repeated[key])
     unchanged_teacher = serial.batch(indices, 1281)
     np.testing.assert_array_equal(first["teacher_rgb"], unchanged_teacher["teacher_rgb"])
     assert not np.array_equal(first["rgb"], unchanged_teacher["rgb"])

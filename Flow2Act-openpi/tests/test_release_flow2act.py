@@ -1,5 +1,5 @@
 # ruff: noqa: N802, N999
-"""Resource-path and explicit-resume contracts for the publication entries."""
+"""Resource-path and training-launch contracts for the publication entries."""
 
 import dataclasses
 import json
@@ -11,7 +11,6 @@ import sys
 
 from openpi.flow2act.config_flow2act import Flow2ActConfig
 from scripts.eval_libero_family_flow2act import benchmark_config_flow2act
-from scripts.resume_flow2act import resume_environment_flow2act
 
 
 def test_benchmark_paths_with_spaces_flow2act(tmp_path):
@@ -25,23 +24,6 @@ def test_benchmark_paths_with_spaces_flow2act(tmp_path):
     assert config["init_states"] == str(base / "init_files")
     assert all(Path(value).is_absolute() for value in config.values())
     assert not (simulator / "config.yaml").exists()
-
-
-def test_resume_saved_batch_and_moved_output_flow2act(tmp_path):
-    run = tmp_path / "published run"
-    checkpoint = run / "checkpoints/checkpoint-30000"
-    (checkpoint / "state").mkdir(parents=True)
-    cfg = dataclasses.asdict(Flow2ActConfig(ga=2, output_dir="previous/location"))
-    (checkpoint / "config_flow2act.json").write_text(json.dumps(cfg))
-    for path in (run / "norm_stats.json", checkpoint / "norm_stats.json"):
-        path.write_text('{"norm_stats": {}}')
-    (checkpoint / "state/_CHECKPOINT_METADATA").write_text('{"commit_timestamp_nsecs": 1}')
-    _, env = resume_environment_flow2act(checkpoint, {"GA": "1", "WORKERS": "2"})
-    assert env["GA"] == "2"
-    assert env["GLOBAL_BATCH_SIZE"] == "256"
-    assert env["WORKERS"] == "2"
-    assert Path(env["OUTPUT_DIR"]) == run
-    assert Path(env["RESUME_CHECKPOINT"]) == checkpoint
 
 
 def test_shell_defaults_match_python_flow2act(tmp_path):

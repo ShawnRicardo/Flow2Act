@@ -51,9 +51,8 @@ Terminal progress reports percentage, elapsed time, update time, ETA and loss.
 compiled update and includes later checkpoint time. Terminal output is not
 automatically redirected to a file; capture it explicitly when required.
 
-Fresh runs refuse nonempty output directories. Resume uses an explicitly selected
-committed checkpoint and saved configuration; worker/logging/stop controls can be
-overridden. `STOP_AFTER_UPDATES=20` runs a short gate without changing the 30k LR
+Training refuses nonempty output directories. `STOP_AFTER_UPDATES=20` runs a
+short gate without changing the 30k LR
 timeline. The entry never changes batch or scientific settings after OOM.
 
 ## Modules
@@ -83,6 +82,6 @@ Model mathematics, native base parameter paths, optimizer, sampling, and trainin
 defaults are unchanged. The auxiliary parameter root and public artifact names
 use `Flow2Act`/`flow2act` consistently; see the resource guide before reusing an
 existing checkpoint or cache. Publication changes also include:
-explicit resume selection; configurable simulator/interpreter/catalog paths;
+configurable simulator/interpreter/catalog paths;
 per-run benchmark configs; resource-free test selection; documentation and
 GitHub exclusions. No training/evaluation state was copied.

@@ -23,7 +23,6 @@ from flow2act.depth_probe import (
     depth_only_losses_flow2act, encode_probe_teacher_depthonly_flow2act,
     depth_metric_sums_flow2act, finalize_depth_metrics_flow2act,
     stratified_episode_split_flow2act, episode_frame_indices_flow2act,
-    validate_depthonly_resume_flow2act,
 )
 
 KIND = "independent_depth_adapter_depthonly_flow2act"
@@ -39,7 +38,6 @@ def arguments():
     p.add_argument("--output-root", default=str(ROOT / "results/probe/Flow2Act/DepthOnly"))
     p.add_argument("--output-dir", default="")
     p.add_argument("--prepare-output", action="store_true", help="CPU-only launch preflight; print the resolved output directory")
-    p.add_argument("--resume-probe", default="")
     p.add_argument("--global-batch-size", type=int, default=32)
     p.add_argument("--grad-accum", type=int, default=1)
     p.add_argument("--max-steps", type=int, default=5000)
@@ -110,14 +108,7 @@ def resolved_output(args, contract, step, world):
     return Path(args.output_root).expanduser().resolve() / key
 
 
-def check_output(output, resume, *, prepare=False, node_rank=0):
-    if resume:
-        if not Path(resume).expanduser().is_file():
-            raise FileNotFoundError(resume)
-        restored = torch.load(Path(resume).expanduser(), map_location="cpu", weights_only=False, mmap=True)
-        if restored.get("kind") != KIND:
-            raise ValueError("RESUME_PROBE must be a depth-only adapter checkpoint, not the mixed-loss probe")
-        return
+def check_output(output, *, prepare=False, node_rank=0):
     if not output.exists():
         return
     for entry in output.iterdir():
@@ -132,7 +123,7 @@ def check_output(output, resume, *, prepare=False, node_rank=0):
                 continue
         elif entry.name == "log.log" or console or torchrun:
             continue
-        raise FileExistsError(f"Choose a fresh OUTPUT_DIR or an explicit RESUME_PROBE: {output}")
+        raise FileExistsError(f"Choose a fresh OUTPUT_DIR: {output}")
 
 
 def write_json(path, value):
@@ -213,7 +204,7 @@ def main():
     node_rank = int(os.environ.get("NODE_RANK", "0"))
     rank = int(os.environ.get("RANK", "0"))
     if args.prepare_output or rank == 0:
-        check_output(output, args.resume_probe, prepare=args.prepare_output, node_rank=node_rank)
+        check_output(output, prepare=args.prepare_output, node_rank=node_rank)
     if args.prepare_output:
         output.mkdir(parents=True, exist_ok=True)
         print(output)
@@ -241,10 +232,6 @@ def train(args, output, source_contract, source_step, rank, world, local, device
     batch_size = args.global_batch_size // (world * args.grad_accum)
     torch.manual_seed(args.seed)
     output.mkdir(parents=True, exist_ok=True)
-    saved = torch.load(args.resume_probe, map_location="cpu", weights_only=False, mmap=True) if args.resume_probe else None
-    existing = list(output.glob("probe_step_*_DepthOnly_flow2act.pt"))
-    if saved is not None and any(int(path.name.split("_")[2]) > int(saved["step"]) for path in existing):
-        raise FileExistsError("Output already contains a later probe checkpoint; choose a new OUTPUT_DIR")
 
     from deploy.server_flow2act import load_policy_flow2act
     policy, contract = load_policy_flow2act(
@@ -300,17 +287,6 @@ def train(args, output, source_contract, source_step, rank, world, local, device
                            data_root=str(Path(args.data_root).resolve()), teacher_weights_dir=str(teacher_dir),
                            processor_path=str(Path(args.processor_path).resolve()), decoder_trainable=False,
                            student_taps=list(policy.student_taps), teacher_taps=list(teacher.layer_ids))
-    start_step = 0
-    if saved is not None:
-        validate_depthonly_resume_flow2act(
-            saved, policy_checkpoint=args.policy_checkpoint, policy_global_step=source_step,
-            policy_contract=contract, probe_config=probe_cfg.to_dict(), split=split, training_config=training_config)
-        probe.load_state_dict(saved["probe"], strict=True)
-        optimizer.load_state_dict(saved["optimizer"])
-        scheduler.load_state_dict(saved["scheduler"])
-        start_step = int(saved["step"])
-        if not 0 <= start_step < args.max_steps:
-            raise ValueError("Resume checkpoint must precede the requested final update")
     train_probe = DistributedDataParallel(probe, device_ids=[local]) if world > 1 else probe
     if rank == 0:
         write_json(output / "config_depth_probe_DepthOnly_flow2act.json",
@@ -408,12 +384,12 @@ def train(args, output, source_contract, source_step, rank, world, local, device
                        temporary)
             temporary.replace(destination)
 
-    epoch = start_step
+    epoch = 0
     sampler.set_epoch(epoch)
     iterator = iter(train_loader)
     probe.train()
     gradient_audited = False
-    for step in range(start_step + 1, args.max_steps + 1):
+    for step in range(1, args.max_steps + 1):
         optimizer.zero_grad(set_to_none=True)
         total = torch.zeros(len(LOSS_KEYS), device=device)
         valid_evidence = torch.zeros((), device=device, dtype=torch.int64)
@@ -478,9 +454,9 @@ def train(args, output, source_contract, source_step, rank, world, local, device
                    dict(identical=True, max_absolute_error=float((before_action - after_action).abs().max()),
                         policy_global_step=source_step, probe_final_step=args.max_steps))
     write_json(output / f"completed_rank{rank}_DepthOnly_flow2act.json",
-               dict(kind=KIND, policy_global_step=source_step, resumed_from_step=start_step,
-                    final_step=args.max_steps, optimizer_updates=args.max_steps - start_step,
-                    microbatches=(args.max_steps - start_step) * args.grad_accum,
+               dict(kind=KIND, policy_global_step=source_step,
+                    final_step=args.max_steps, optimizer_updates=args.max_steps,
+                    microbatches=args.max_steps * args.grad_accum,
                     global_batch_size=args.global_batch_size, batch_per_gpu=batch_size,
                     gradient_accumulation=args.grad_accum, world_size=world,
                     adapter_parameters=sum(parameter.numel() for parameter in probe.parameters()),

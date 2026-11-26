@@ -8,7 +8,7 @@
 - 原生 JAX 模型、训练入口与全局 registry 保持不变；新增实验放在
   `src/openpi/flow2act/`，模块和入口使用 `_flow2act` 后缀，类名使用 `Flow2Act` 前缀。
 - 不回退、覆盖或批量格式化用户的其他修改。
-- 保留 JAX 训练、续训、策略服务、LIBERO/LIBERO-Plus 评测、可视化及其依赖。
+- 保留 JAX 训练、策略服务、LIBERO/LIBERO-Plus 评测、可视化及其依赖。
 - 上游 `models_pytorch/` 的基础模块是原生 `models/model.py` 的直接导入依赖；
   不可按名字批量删除。Torch 也用于 LeRobot 数据加载和独立数值对照测试。
 - 发布副本通过显式 benchmark 路径生成每次评测的配置，不依赖开发机目录。
@@ -44,13 +44,12 @@
   JAX 训练及推理不得导入预处理模型。缓存导出与读取共享格式约定。
 - 已有 native-UV 缓存直接只读复用，按 metadata 识别旧文件后缀并严格校验语义；
   不因框架、memory、超参数或发布改名而重算标签，不更改原缓存文件或权限。
-- 训练首次缺失 norm 时自动计算，已有时校验复用；续训使用 checkpoint 原统计。
+- 训练首次缺失 norm 时自动计算，已有时校验复用。
 - 显式本地权重导入保留原 tensor、norm、stage 和 memory，只导出 EMA 推理包；
-  不将旧 memory=1 权重标作 memory=3，不将推理包用于续训。
+  不将旧 memory=1 权重标作 memory=3。
 - 基础权重严格核对 key、shape、dtype、finite，不用随机值填补缺失参数，不计算 SHA。
 - checkpoint 保存训练参数、EMA、optimizer/scheduler、global step、RNG、sampler 位置、
   完整配置和 norm stats；不保存冻结 Teacher，不增加 marker、receipt 或完整性 manifest。
-- 续训只接受显式 checkpoint，恢复其配置并校验一致性，不自动寻找最新 checkpoint。
 - 默认输出目录由超参数生成，允许 `OUTPUT_DIR` 覆盖。fresh 运行拒绝非空目录，不生成随机 Run ID。
 - 训练、部署、评测的具体协议见 `train_scripts/README_flow2act.md` 和实际保留入口。
 

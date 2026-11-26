@@ -29,11 +29,12 @@ def import_config_flow2act(source, config_path, tokenizer_path):
             raise ValueError("Provide --config when the source does not contain exactly one config*.json")
         config_path = candidates[0]
     values = json.loads(Path(config_path).read_text())
-    controls = {"output_dir", "resume_checkpoint", "workers", "log_interval", "stop_after_updates"}
+    controls = {"output_dir", "workers", "log_interval", "stop_after_updates"}
     required = {field.name for field in dataclasses.fields(Flow2ActConfig)} - controls
     if missing := required - values.keys():
         raise ValueError(f"Source checkpoint lacks scientific configuration fields: {sorted(missing)}")
     values["student_taps"] = tuple(values["student_taps"])
+    values.pop("resume_checkpoint", None)  # Ignore obsolete training metadata.
     cfg = Flow2ActConfig(**values)
     cfg.validate()
     defaults = Flow2ActConfig()
@@ -41,7 +42,6 @@ def import_config_flow2act(source, config_path, tokenizer_path):
     return dataclasses.replace(
         cfg,
         output_dir="",
-        resume_checkpoint="",
         data_root=defaults.data_root,
         base_params=defaults.base_params,
         teacher_path=defaults.teacher_path,

@@ -41,7 +41,6 @@ TEACHER_CPU_OFFLOAD="${TEACHER_CPU_OFFLOAD:-false}"
 TEACHER_MMAP_WEIGHTS="${TEACHER_MMAP_WEIGHTS:-false}"
 OFFLOAD_OPTIMIZER="${OFFLOAD_OPTIMIZER:-false}"
 MAX_OPTIMIZER_GROUP_ELEMENTS="${MAX_OPTIMIZER_GROUP_ELEMENTS:-0}"
-RESUME_CHECKPOINT="${RESUME_CHECKPOINT:-}"
 NNODES="${NNODES:-${MLP_WORKER_NUM:-1}}"
 NPROC_PER_NODE="${NPROC_PER_NODE:-${RESOURCE_GPU:-8}}"
 NODE_RANK="${NODE_RANK:-${MLP_ROLE_INDEX:-}}"
@@ -75,7 +74,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-${OUTPUT_ROOT}/${EXP_NAME}}"
 for argument in "$@"; do
  key="${argument%%=*}"; key="${key#+}"; key="${key#+}"; key="${key#\~}"
  case "${key}" in
-  trainer.output_dir|trainer.exp_name|trainer.ckpt_path|hydra.run.dir|hydra.sweep.*|--multirun|-m|\
+  trainer.output_dir|trainer.exp_name|hydra.run.dir|hydra.sweep.*|--multirun|-m|\
   trainer.accumulate_grad_batches|trainer.num_nodes|trainer.max_steps|trainer.seed|trainer.scheduler.params.*|\
   data.params.train_datasets.batch_size|data.params.train_datasets.action_length|data.params.train_datasets.augment|\
   model.params.expected_world_size|model.params.visualization.*|model.params.model.stage|\
@@ -94,11 +93,10 @@ CONSOLE_LOG="${OUTPUT_DIR}/console_node${NODE_RANK:-0}_flow2act.log"
 # until node zero has accepted the directory. Other nodes may log bootstrap.
 if (( NODE_RANK == 0 )); then
  check_output_directory() {
-  python - "${OUTPUT_DIR}" "${RESUME_CHECKPOINT}" "${NNODES}" "${STAGE}" "${MEMORY_LENGTH}" "${ACTION_LENGTH}" "${FUTURE_HORIZON}" "${EXECUTE_HORIZON}" "${TOTAL_GPUS}" "${BATCH_SIZE}" "${GRAD_ACCUM}" "${LR}" "${MIN_LR}" "${WARMUP_LR}" "${WARMUP_STEPS}" "${SEED}" "${TRAINING_REPEAT}" "${GEO_LOSS_WEIGHT}" "${MOTION_2D_LOSS_WEIGHT}" "${MOTION_3D_LOSS_WEIGHT}" "${REPO_ROOT}" "${NORM_STATS}" <<'PY'
+  python - "${OUTPUT_DIR}" "${NNODES}" "${ACTION_LENGTH}" "${REPO_ROOT}" "${NORM_STATS}" <<'PY'
 import json, re, sys
 from pathlib import Path
-import yaml
-directory, resume, nodes, stage, memory, action, future, execute, world, batch, ga, lr, min_lr, warm_lr, warmup, seed, repeat, geo, m2d, m3d, repo, stats_path = sys.argv[1:]
+directory, nodes, action, repo, stats_path = sys.argv[1:]
 stats_path = Path(stats_path)
 if not stats_path.is_absolute():
     stats_path = Path(repo) / stats_path
@@ -111,38 +109,13 @@ if stats_path.exists():
         ):
             sys.exit(f'Action statistics mismatch: {stats_path} must contain {key} shaped ({action}, 32). Use statistics computed for ACTION_LENGTH={action}; do not reuse another horizon.')
 directory = Path(directory)
-if not resume:
-    for item in directory.iterdir() if directory.is_dir() else ():
-        if item.name == 'log.log' and item.is_file() and item.stat().st_size == 0:
-            continue
-        match = re.fullmatch(r'(?:console_node|torchrun_node)([1-9][0-9]*)_flow2act(?:\.log)?', item.name)
-        if match and 0 < int(match[1]) < int(nodes):
-            continue
-        sys.exit(f'Output directory is not empty: {directory}. Use a different OUTPUT_DIR/EXP_NAME or explicitly set RESUME_CHECKPOINT.')
-    sys.exit(0)
-checks = {
- 'model.params.model.stage': stage, 'model.params.model.memory_length': int(memory),
- 'model.params.model.action_shape': [int(action), 32], 'model.params.model.future_horizon': int(future),
- 'model.params.model.execute_horizon': int(execute), 'model.params.model.training_repeat': int(repeat),
- 'model.params.expected_world_size': int(world), 'data.params.train_datasets.batch_size': int(batch),
- 'trainer.accumulate_grad_batches': int(ga), 'trainer.seed': int(seed),
- 'trainer.scheduler.params.max_lr': float(lr), 'trainer.scheduler.params.min_lr': float(min_lr),
- 'trainer.scheduler.params.warmup_lr_start': float(warm_lr), 'trainer.scheduler.params.num_warmup_steps': int(warmup),
-}
-if stage != 'baseline': checks['model.params.model.geo_loss_weight'] = float(geo)
-if stage in ('motion2d', 'motion3d'): checks['model.params.model.motion_2d_loss_weight'] = float(m2d)
-if stage == 'motion3d': checks['model.params.model.motion_3d_loss_weight'] = float(m3d)
-for path in directory.glob('config*_flow2act.yaml'):
-    config = yaml.safe_load(path.read_text()) or {}
-    for key, expected in checks.items():
-        current = config
-        for part in key.split('.'):
-            if not isinstance(current, dict) or part not in current:
-                break
-            current = current[part]
-        else:
-            if current != expected:
-                sys.exit(f'Resume configuration mismatch in {path.name}: {key} saved={current!r}, requested={expected!r}. Use an independent output directory.')
+for item in directory.iterdir() if directory.is_dir() else ():
+    if item.name == 'log.log' and item.is_file() and item.stat().st_size == 0:
+        continue
+    match = re.fullmatch(r'(?:console_node|torchrun_node)([1-9][0-9]*)_flow2act(?:\.log)?', item.name)
+    if match and 0 < int(match[1]) < int(nodes):
+        continue
+    sys.exit(f'Output directory is not empty: {directory}. Use a different OUTPUT_DIR/EXP_NAME.')
 PY
  }
  # Validate before opening a file, then again under the lock to close races.
@@ -189,9 +162,6 @@ if (( NODE_RANK == 0 )) && [[ ! -f "${NORM_STATS}" ]]; then
  python "${REPO_ROOT}/xr0/tools/compute_libero_stats_flow2act.py" \
   --data-root "${DATA_ROOT}" --action-length "${ACTION_LENGTH}" --output "${NORM_STATS}" --if-missing
 fi
-if [[ -n "${RESUME_CHECKPOINT}" && "${RESUME_CHECKPOINT}" != /* && "${RESUME_CHECKPOINT}" != last && "${RESUME_CHECKPOINT}" != best ]]; then RESUME_CHECKPOINT="${REPO_ROOT}/${RESUME_CHECKPOINT}"; fi
-RESUME_OVERRIDE=null
-if [[ -n "${RESUME_CHECKPOINT}" ]]; then RESUME_OVERRIDE="$(hydra_string "${RESUME_CHECKPOINT}")"; fi
 export NNODES NPROC_PER_NODE NODE_RANK MASTER_ADDR MASTER_PORT
 export HF_HUB_OFFLINE="${HF_HUB_OFFLINE:-1}" TRANSFORMERS_OFFLINE="${TRANSFORMERS_OFFLINE:-1}"
 export PYTHONUNBUFFERED=1 HYDRA_FULL_ERROR=1 PYTHONFAULTHANDLER=1
@@ -202,7 +172,7 @@ if [[ "${OFFLOAD_OPTIMIZER}" == true ]]; then
 elif [[ "${OFFLOAD_OPTIMIZER}" != false ]]; then echo "OFFLOAD_OPTIMIZER must be true or false" >&2; exit 2; fi
 echo "Started $(date -u '+%Y-%m-%d %H:%M:%S UTC'); stage=${STAGE}; memory including current=${MEMORY_LENGTH}; HA=${ACTION_LENGTH}; HF=${FUTURE_HORIZON}; M=${EXECUTE_HORIZON}"
 echo "GBS=${GLOBAL_BATCH_SIZE}; total_GPUs=${TOTAL_GPUS}; GA=${GRAD_ACCUM}; batch/GPU=${BATCH_SIZE}; flow_repeat=${TRAINING_REPEAT}; steps=${MAX_STEPS}; LR=${LR}"
-echo "pretrained=${PRETRAINED_CHECKPOINT}; resume=${RESUME_CHECKPOINT:-none}; data=${DATA_ROOT}; stats=${NORM_STATS}; output=${OUTPUT_DIR}"
+echo "pretrained=${PRETRAINED_CHECKPOINT}; data=${DATA_ROOT}; stats=${NORM_STATS}; output=${OUTPUT_DIR}"
 echo "Motion cache is read only by motion stages: ${MOTION_CACHE_ROOT}; baseline does not construct DA3"
 exec bash "${REPO_ROOT}/xr0/scripts/train_flow2act.sh" \
  "data.params.train_datasets.root=$(hydra_string "${DATA_ROOT}")" "data.params.train_datasets.stats_path=$(hydra_string "${NORM_STATS}")" \
@@ -218,7 +188,7 @@ exec bash "${REPO_ROOT}/xr0/scripts/train_flow2act.sh" \
  "model.params.model.memory_length=${MEMORY_LENGTH}" "model.params.model.execute_horizon=${EXECUTE_HORIZON}" \
  "model.params.model.training_repeat=${TRAINING_REPEAT}" "model.params.model.geo_loss_weight=${GEO_LOSS_WEIGHT}" \
  "model.params.model.motion_2d_loss_weight=${MOTION_2D_LOSS_WEIGHT}" "model.params.model.motion_3d_loss_weight=${MOTION_3D_LOSS_WEIGHT}" \
- "trainer.output_dir=$(hydra_string "${OUTPUT_DIR}")" "trainer.exp_name=$(hydra_string "${EXP_NAME}")" "trainer.ckpt_path=${RESUME_OVERRIDE}" \
+ "trainer.output_dir=$(hydra_string "${OUTPUT_DIR}")" "trainer.exp_name=$(hydra_string "${EXP_NAME}")" \
  "trainer.scheduler.params.max_lr=${LR}" "trainer.scheduler.params.min_lr=${MIN_LR}" "trainer.scheduler.params.warmup_lr_start=${WARMUP_LR}" \
  "trainer.scheduler.params.num_warmup_steps=${WARMUP_STEPS}" "trainer.max_steps=${MAX_STEPS}" "trainer.save_interval=${SAVE_INTERVAL}" \
  "trainer.accumulate_grad_batches=${GRAD_ACCUM}" "trainer.seed=${SEED}" "trainer.num_nodes=${NNODES}" \

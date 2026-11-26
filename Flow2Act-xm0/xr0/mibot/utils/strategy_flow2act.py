@@ -1,12 +1,9 @@
 """Native ZeRO-2 checkpoints on three non-shared, task-local filesystems.
 
-Checkpoint handling changes only filesystem placement. DeepSpeed still writes
-and loads its native model/optimizer format, and rigid resume requires the same
-data-parallel world size. The chief host retains complete checkpoints; workers
-reuse a bounded save spool. Before resume, run tools/prepare_checkpoint_flow2act.py
-once per physical host, with that host's actual global ranks. An explicit
-process-exit-only option skips the native model-to-CPU teardown copy; its
-default retains native cleanup behavior.
+Checkpoint handling changes only filesystem placement. The chief host retains
+complete native model/optimizer checkpoints; workers reuse a bounded save spool.
+An explicit process-exit-only option skips the native model-to-CPU teardown copy;
+its default retains native cleanup behavior.
 """
 from pathlib import Path
 import subprocess
@@ -157,10 +154,8 @@ class DeepSpeedStrategyFlow2Act(DeepSpeedStrategy):
         if failures:
             raise RuntimeError("Checkpoint shard transfer failed collectively: " + "; ".join(failures))
 
-    def load_checkpoint(self, checkpoint_path: str) -> dict:
-        return super().load_checkpoint(str(self.local_checkpoint_path(str(checkpoint_path))))
 
     def remove_checkpoint(self, filepath: str) -> None:
         # Native retention runs the deletion only on global zero. Worker spool
-        # and separately prepared resume directories are never pruned here.
+        # directories are never pruned here.
         super().remove_checkpoint(str(self.local_checkpoint_path(str(filepath))))

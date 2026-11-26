@@ -1,6 +1,5 @@
 """Exercise copied shell entrypoints without starting CUDA or model loading."""
 import json
-import fcntl
 import os
 from pathlib import Path
 import subprocess
@@ -40,7 +39,7 @@ sys.exit(int(os.environ.get("FAKE_EXIT_CODE", "0")))
         executable.chmod(0o777)
         self.environment = dict(os.environ)
         for name in ("OUTPUT_DIR", "EXP_NAME", "STAGE", "NNODES", "NODE_RANK", "MASTER_ADDR",
-                     "NPROC_PER_NODE", "RESOURCE_GPU", "RESUME_CHECKPOINT", "CUDA_VISIBLE_DEVICES",
+                     "NPROC_PER_NODE", "RESOURCE_GPU", "CUDA_VISIBLE_DEVICES",
                      "MLP_WORKER_NUM", "MLP_ROLE_INDEX", "MLP_WORKER_0_HOST", "MLP_WORKER_0_PORT",
                      "ACTION_LENGTH", "FUTURE_HORIZON", "EXECUTE_HORIZON", "NORM_STATS"):
             self.environment.pop(name, None)
@@ -210,16 +209,12 @@ sys.exit(int(os.environ.get("FAKE_EXIT_CODE", "0")))
         self.assertEqual(list(output.iterdir()), [output / "config.yaml"])
         self.assertFalse((self.root / "argv.json").exists())
 
-    def test_explicit_empty_path_and_resume_quoting(self):
+    def test_explicit_empty_path_quoting(self):
         output = self.root / "output=quoted space"
         output.mkdir()
         result, values = self.launch(dict(OUTPUT_DIR=str(output)))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(values["trainer.output_dir"], str(output))
-        for resume in (str(self.root / "step-step=0000002_flow2act.ckpt"), "last", "best"):
-            result, values = self.launch(dict(OUTPUT_DIR=str(output), RESUME_CHECKPOINT=resume))
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertEqual(values["trainer.ckpt_path"], resume)
 
     def test_stdout_stderr_and_original_failure_are_preserved(self):
         output = self.root / "failure"
@@ -230,30 +225,6 @@ sys.exit(int(os.environ.get("FAKE_EXIT_CODE", "0")))
             self.assertIn("fake torchrun stdout", text)
             self.assertIn("fake torchrun stderr", text)
 
-    def test_resume_rejects_different_saved_stage_before_log_write(self):
-        output = self.root / "resume_wrong_stage"
-        output.mkdir()
-        config = output / "config_flow2act.yaml"
-        text = "model:\n  params:\n    model:\n      stage: static\n"
-        config.write_text(text)
-        result, _ = self.launch(dict(OUTPUT_DIR=str(output), RESUME_CHECKPOINT="last", STAGE="motion2d"))
-        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        self.assertIn("Resume configuration mismatch", result.stderr)
-        self.assertEqual(config.read_text(), text)
-        self.assertFalse((output / "log.log").exists())
-
-    def test_active_output_kernel_lock_rejects_even_explicit_resume(self):
-        output = self.root / "already_active"
-        output.mkdir()
-        with (output / "log.log").open("w") as handle:
-            handle.write("Existing training console\n")
-            handle.flush()
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            result, _ = self.launch(dict(OUTPUT_DIR=str(output), RESUME_CHECKPOINT="last"))
-            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-            self.assertIn("already owned by a running job", result.stderr)
-            self.assertEqual((output / "log.log").read_text(), "Existing training console\n")
-            self.assertFalse((output / "console_node0_flow2act.log").exists())
 
     def test_node_zero_accepts_other_nodes_bootstrap_only(self):
         output = self.root / "multinode"

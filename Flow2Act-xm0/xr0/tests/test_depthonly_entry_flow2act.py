@@ -51,7 +51,7 @@ sys.exit(int(os.environ.get("FAKE_EXIT_CODE", "0")))
         self.environment = dict(os.environ)
         for name in ("OUTPUT_DIR", "NNODES", "NODE_RANK", "MASTER_ADDR", "NPROC_PER_NODE", "RESOURCE_GPU",
                      "CUDA_VISIBLE_DEVICES", "MLP_WORKER_NUM", "MLP_ROLE_INDEX", "MLP_WORKER_0_HOST",
-                     "MLP_WORKER_0_PORT", "GLOBAL_BATCH_SIZE", "GRAD_ACCUM", "RESUME_PROBE"):
+                     "MLP_WORKER_0_PORT", "GLOBAL_BATCH_SIZE", "GRAD_ACCUM"):
             self.environment.pop(name, None)
         self.environment.update(ENV_PATH=str(self.root / "env"), OUTPUT_DIR=str(self.root / "output"),
                                 POLICY_CHECKPOINT=str(self.root / "source-policy.ckpt"),
@@ -252,10 +252,6 @@ class DepthOnlyPrepareTestsFlow2Act(unittest.TestCase):
                     self.prepare()
                 self.assertFalse((self.root / "output").exists())
 
-    def test_missing_resume_does_not_create_output(self):
-        with self.assertRaises(FileNotFoundError):
-            self.prepare(("--resume-probe", str(self.root / "missing.pt")))
-        self.assertFalse((self.root / "output").exists())
 
     def test_invalid_gbs_loss_and_validation_settings_fail_before_output(self):
         for args in (("--global-batch-size", "0"), ("--global-batch-size", "31"),
